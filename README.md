@@ -84,6 +84,19 @@ Same reference frame, same action. Left: MG2 official distilled model. Right: Fo
 pip install -r requirements.txt
 ```
 
+### Download Models & Data
+
+```bash
+# MG2 base model (~9 GB)
+bash scripts/download_models.sh
+
+# ForgeWM checkpoints (Stage 0 + Stage 3 DMD)
+huggingface-cli download asdfo123/ForgeWM --local-dir ./ckpts --repo-type model
+
+# Training data (pre-encoded 360p LMDB, ~89 GB)
+huggingface-cli download asdfo123/ForgeWM-data --local-dir ./data/action_lmdb --repo-type dataset
+```
+
 ### Inference (Single GPU)
 
 ```bash
@@ -133,7 +146,9 @@ torchrun --nproc_per_node=8 train.py --config_path configs/stage3_dmd.yaml --log
 
 - ✅ 4-stage training pipeline (Bid SFT → TF AR → CD → DMD)
 - ✅ Action-conditioned inference
-- 🚧 Checkpoint release (HuggingFace)
+- ✅ Stage 0 & Stage 3 checkpoints ([HuggingFace](https://huggingface.co/asdfo123/ForgeWM))
+- ✅ Pre-encoded training data ([HuggingFace](https://huggingface.co/datasets/asdfo123/ForgeWM-data))
+- 🚧 Stage 1 & Stage 2 checkpoints (training in progress)
 - 🚧 Interactive real-time demo
 - 🚧 Tech report
 
