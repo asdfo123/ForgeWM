@@ -47,8 +47,10 @@ Same reference frame, same action (walk forward). Left: MG2 official distilled m
 |---------|-----------|---------|----------|-----|-----------|------------|
 | **ForgeWM** | Wan2.1-1.3B | Keyboard + Mouse | Causal Forcing | ✅ | ✅ GameFactory | ✅ |
 | MG2 (Skywork) | Wan2.1-1.3B | Keyboard + Mouse | Self Forcing | ✅ | ❌ | ❌ (inference only) |
-| minWM | HY1.5 / Wan2.1 | Camera pose | Causal Forcing | HY TI2V only | ✅ (T2V + camera) | ✅ |
+| minWM | HY1.5 / Wan2.1 | Camera pose | Causal Forcing | HY only | ✅ (camera data) | ✅ |
 | HY-GameCraft | HunyuanVideo | Camera | Phased Consistency | ❌ | ❌ | Partial |
+
+> minWM's HY15 line supports TI2V (text+image→video); the Wan2.1 line is T2V+camera only. Their open data is camera-trajectory based, not game-specific keyboard/mouse actions.
 
 ---
 
