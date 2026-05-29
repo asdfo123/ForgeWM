@@ -82,7 +82,6 @@ class CausalInferencePipeline(torch.nn.Module):
         return_latents: bool = False,
         profile: bool = False,
         low_memory: bool = False,
-        rectified_tf = False 
     ) -> torch.Tensor:
         """
         Perform inference on the given noise and Stage1 conditional inputs.
@@ -307,11 +306,6 @@ class CausalInferencePipeline(torch.nn.Module):
             diffusion_time = diffusion_start.elapsed_time(diffusion_end)
             init_time = init_start.elapsed_time(init_end)
             vae_start.record()
-        if rectified_tf: 
-            mean = torch.load('laboratory/mean.pt').to(output.device) 
-            std = torch.load('laboratory/std.pt').to(output.device) 
-            noise = torch.randn_like(output).to(output.device) 
-            output -= mean 
         # Step 4: Decode the output
         video = self.vae.decode_to_pixel(output, use_cache=False)
         video = (video * 0.5 + 0.5).clamp(0, 1)

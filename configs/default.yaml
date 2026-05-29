@@ -8,3 +8,4 @@ num_training_frames: 21
 gc_interval: 100
 context_noise: 0
 causal: true
+disable_wandb: true
