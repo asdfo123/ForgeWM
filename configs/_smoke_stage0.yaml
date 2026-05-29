@@ -1,18 +1,9 @@
-trainer: score_distillation
-distribution_loss: dmd
+trainer: diffusion
+causal: false
+teacher_forcing: false
 i2v: true
-causal: true
 generator_fsdp_wrap_strategy: size
-real_score_fsdp_wrap_strategy: size
-fake_score_fsdp_wrap_strategy: size
-real_name: Wan2.1-T2V-1.3B
-fake_name: Wan2.1-T2V-1.3B
 text_encoder_fsdp_wrap_strategy: size
-denoising_step_list:
-- 1000
-- 750
-- 500
-- 250
 warp_denoising_step: true
 ts_schedule: false
 num_train_timestep: 1000
@@ -25,30 +16,22 @@ gradient_checkpointing: true
 load_raw_video: false
 sharding_strategy: full
 lr: 2.0e-06
-lr_critic: 4.0e-07
 beta1: 0.0
 beta2: 0.999
-beta1_critic: 0.0
-beta2_critic: 0.999
 batch_size: 1
 total_batch_size: 8
 ema_weight: 0.99
-ema_start_step: 200
-log_iters: 200
-total_train_steps: 4000
-dfake_gen_update_ratio: 5
+ema_start_step: 2000000000
+log_iters: 1
+total_train_steps: 1
 negative_prompt: low quality, blurry, distorted
-# Resolution: 352×640 pixels → 44×80 latent. Data MUST be encoded at this resolution.
 image_or_video_shape:
 - 1
 - 21
 - 16
 - 44
 - 80
-num_frame_per_block: 3
-local_attn_size: 6
-sink_size: 0
-num_training_frames: 22
+num_frame_per_block: 21
 wandb_host: https://api.wandb.ai
 wandb_key: disabled
 wandb_entity: disabled
@@ -59,12 +42,9 @@ model_kwargs:
 data_path: ./data/action_lmdb
 action_data: true
 action_sharded: false
-generator_ckpt: ./ckpts/stage2/model.pt
-checkpoint_path: ./ckpts/stage3/model.pt
 generator_cpu_offload: false
-real_score_cpu_offload: false
-fake_score_cpu_offload: false
 text_encoder_cpu_offload: false
+checkpoint_path: ./ckpts/stage0/model.pt
 action_config:
   mouse_dim_in: 2
   keyboard_dim_in: 6

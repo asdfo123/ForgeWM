@@ -34,11 +34,10 @@ batch_size: 1
 total_batch_size: 8
 ema_weight: 0.99
 ema_start_step: 200
-log_iters: 200
-total_train_steps: 4000
+log_iters: 1
+total_train_steps: 1
 dfake_gen_update_ratio: 5
 negative_prompt: low quality, blurry, distorted
-# Resolution: 352×640 pixels → 44×80 latent. Data MUST be encoded at this resolution.
 image_or_video_shape:
 - 1
 - 21
