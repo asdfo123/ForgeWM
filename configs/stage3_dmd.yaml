@@ -59,6 +59,7 @@ data_path: ./data/action_lmdb
 action_data: true
 action_sharded: true
 generator_ckpt: ./ckpts/stage2/model.pt
+teacher_ckpt: ./ckpts/stage0/model.pt  # Domain-adapted teacher (v5 route)
 generator_cpu_offload: false
 real_score_cpu_offload: false
 fake_score_cpu_offload: false
