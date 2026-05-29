@@ -11,6 +11,8 @@
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue">
   <img src="https://img.shields.io/badge/python-3.10+-green">
   <img src="https://img.shields.io/badge/GPUs-8×H20-orange">
+  <a href="https://huggingface.co/asdfo123/ForgeWM"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Models-yellow"></a>
+  <a href="https://huggingface.co/datasets/asdfo123/ForgeWM-data"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Data-yellow"></a>
   <a href="你的arXiv链接"><img src="https://img.shields.io/badge/arXiv-coming%20soon-red"></a>
 </p>
 <p align="center">
