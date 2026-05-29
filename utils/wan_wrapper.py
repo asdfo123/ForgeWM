@@ -29,6 +29,9 @@ class WanTextEncoder(nn.Module):
 class WanVAEWrapper(nn.Module):
     def __init__(
         self,
+        vae_path: str = "ckpts/MG2-base/Wan2.1_VAE.pth",
+        clip_checkpoint_path: str = "ckpts/MG2-base/models_clip_open-clip-xlm-roberta-large-vit-huge-14.pth",
+        clip_tokenizer_path: str = "ckpts/MG2-base/xlm-roberta-large",
     ):
         super().__init__()
         mean = [

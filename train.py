@@ -3,7 +3,7 @@ import os
 from omegaconf import OmegaConf
 import wandb
 
-from trainer import DiffusionTrainer, ScoreDistillationTrainer
+from trainer import DiffusionTrainer, ScoreDistillationTrainer, ConsistencyDistillationTrainer
 
 
 def main():
@@ -18,15 +18,14 @@ def main():
     parser.add_argument("--tf", action="store_true")
 
     args = parser.parse_args()
-
     config = OmegaConf.load(args.config_path)
-    default_config = OmegaConf.load("configs/default_config.yaml")
+    default_config = OmegaConf.load("configs/default.yaml")
     config = OmegaConf.merge(default_config, config)
+
+    config_name = os.path.basename(args.config_path).split(".")[0]
     config.no_save = args.no_save
     config.no_visualize = args.no_visualize
-    config.tf = args.tf 
-    # get the filename of config_path
-    config_name = os.path.basename(args.config_path).split(".")[0]
+    config.wandb_save_dir = args.wandb_save_dir
     config.config_name = config_name
     config.logdir = args.logdir
     config.wandb_save_dir = args.wandb_save_dir
@@ -36,6 +35,10 @@ def main():
         trainer = DiffusionTrainer(config)
     elif config.trainer == "score_distillation":
         trainer = ScoreDistillationTrainer(config)
+    elif config.trainer == "consistency_distillation":
+        trainer = ConsistencyDistillationTrainer(config)
+    else:
+        raise ValueError(f"Unknown trainer: {config.trainer}")
     trainer.train()
 
     wandb.finish()

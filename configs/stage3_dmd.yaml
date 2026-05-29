@@ -1,7 +1,7 @@
 trainer: score_distillation
 distribution_loss: dmd
 causal: true
-steps: 4000
+total_train_steps: 4000
 num_frame_per_block: 3
 local_attn_size: 6
 lr: 2e-6
@@ -9,7 +9,8 @@ batch_size: 1
 total_batch_size: 8
 image_or_video_shape: [1, 21, 16, 44, 80]
 wandb_project: forgewm
-model_name: ./ckpts/MG2-base
+model_kwargs:
+  model_name: ./ckpts/MG2-base
 data_path: ./data/action_lmdb
 generator_ckpt: ./ckpts/stage2/model.pt
 checkpoint_path: ./ckpts/stage3/model.pt
