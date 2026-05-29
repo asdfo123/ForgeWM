@@ -124,14 +124,15 @@ ForgeWM integrates work from multiple research groups:
 | Component | Source |
 |-----------|--------|
 | Base model | [Matrix-Game 2](https://github.com/skywork-ai/matrix-game) |
-| Training data | [GameFactory](https://github.com/GameFactory-Minecraft/GameFactory) |
-| Distillation | [Causal Forcing](https://arxiv.org/abs/2602.02214) |
+| Training data | [GameFactory](https://github.com/KlingAIResearch/GameFactory) |
+| Distillation | [Causal Forcing](https://github.com/thu-ml/Causal-Forcing) |
 
 We also thank the authors of:
-- [Self-Forcing](https://arxiv.org/abs/2406.00893)
-- [CausVid](https://arxiv.org/abs/2412.07772)
-- [Wan 2.1](https://github.com/Wan-AI/Wan)
-- [minWM](https://github.com/MIN-Lab/minWM)
+- [Self-Forcing](https://github.com/guandeh17/Self-Forcing)
+- [CausVid](https://github.com/tianweiy/CausVid)
+- [Wan 2.1](https://github.com/Wan-Video/Wan2.1)
+- [minWM](https://github.com/shengshu-ai/minWM)
+- [GameCraft](https://github.com/Tencent-Hunyuan/Hunyuan-GameCraft-1.0)
 - [HunyuanVideo](https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5)
 
 ---
