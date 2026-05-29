@@ -118,18 +118,22 @@ def infer_causal(pipeline, conditional_dict, num_frames, height, width,
     noise = torch.randn([1, num_frames, 16, height // 8, width // 8],
                         device=device, dtype=dtype)
 
-    if hasattr(pipeline, 'inference'):
+    # CausalInferencePipeline (DMD few-step) and CausalDiffusionInferencePipeline
+    # (multi-step) have different signatures.
+    if isinstance(pipeline, CausalInferencePipeline):
+        # DMD 4-step: returns video directly, no return_video kwarg
+        video = pipeline.inference(
+            noise=noise,
+            conditional_dict=conditional_dict,
+            return_latents=False,
+        )
+    else:
+        # Multi-step causal (Stage 1): supports return_video
         video, _ = pipeline.inference(
             noise=noise,
             conditional_dict=conditional_dict,
             return_latents=True,
             return_video=True,
-        )
-    else:
-        video = pipeline.inference(
-            noise=noise,
-            conditional_dict=conditional_dict,
-            return_latents=False,
         )
     return video
 
@@ -198,7 +202,7 @@ def main():
         config = OmegaConf.merge(default_config, config)
 
     is_causal = config.get("causal", True)
-    is_dmd = hasattr(config, "denoising_step_list")
+    is_dmd = "denoising_step_list" in config and config.denoising_step_list is not None
 
     # Build pipeline
     print(f"Mode: {'DMD' if is_dmd else 'causal' if is_causal else 'bidirectional'}")
