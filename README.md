@@ -40,15 +40,24 @@ ForgeWM fills the remaining gap: a fully open, end-to-end pipeline that brings C
 
 ### ForgeWM (4-step DMD) vs Matrix-Game 2 (Self-Forcing Distillation)
 
-Same reference frame, same action (walk forward). Left: MG2 official distilled model (Self-Forcing). Right: ForgeWM Stage 3 (Causal Forcing).
+Same reference frame, same action. Left: MG2 official distilled model. Right: ForgeWM Stage 3.
 
 | Scene | Matrix-Game 2 | ForgeWM |
 |-------|--------------|---------|
-| Forest | <img src="assets/results/mg2_distill_forest_day_00.gif" width="280"> | <img src="assets/results/forgewm_forest_day_00.gif" width="280"> |
-| Plains | <img src="assets/results/mg2_distill_plains_day_03.gif" width="280"> | <img src="assets/results/forgewm_plains_day_03.gif" width="280"> |
-| Desert | <img src="assets/results/mg2_distill_desert_day_03.gif" width="280"> | <img src="assets/results/forgewm_desert_day_03.gif" width="280"> |
+| Forest (turn right) | <img src="assets/results/mg2_forest_turn_right.gif" width="320"> | <img src="assets/results/forge_forest_turn_right.gif" width="320"> |
+| Plains (forward) | <img src="assets/results/mg2_plains_forward.gif" width="320"> | <img src="assets/results/forge_plains_forward.gif" width="320"> |
+| Cave (forward) | <img src="assets/results/mg2_cave_forward.gif" width="320"> | <img src="assets/results/forge_cave_forward.gif" width="320"> |
+| Desert (back) | <img src="assets/results/mg2_desert_back.gif" width="320"> | <img src="assets/results/forge_desert_back.gif" width="320"> |
+| Rainy night (random) | <img src="assets/results/mg2_night_random.gif" width="320"> | <img src="assets/results/forge_night_random.gif" width="320"> |
+| Rainy night (forward) | <img src="assets/results/mg2_sunset_forward.gif" width="320"> | <img src="assets/results/forge_sunset_forward.gif" width="320"> |
 
-> Both use 4-step inference at 352×640. MG2 uses the official Self-Forcing distilled checkpoint; ForgeWM trains from scratch on GameFactory data with Causal Forcing.
+**Observations:**
+
+- **Overall quality**: ForgeWM largely reproduces MG2's generation quality at 4-step inference. Temporal smoothness is slightly better; fine-grained texture detail is slightly weaker (likely due to smaller training data: GameFactory ~70h vs MG2's proprietary dataset).
+- **"Underwater" artifact fixed**: MG2's original model tends to drift into underwater/ocean textures when encountering rain, blue sky, or dark scenes (rows 5–6) — likely caused by an over-representation of ocean footage in its proprietary training data. ForgeWM, trained on GameFactory's balanced action distribution, does not exhibit this failure mode.
+- **Action controllability**: Both models respond correctly to keyboard/mouse inputs. ForgeWM's Causal Forcing distillation preserves action fidelity through all 4 stages.
+
+> Both models use 4-step inference at 352×640. MG2 uses the official Self-Forcing distilled checkpoint; ForgeWM trains from scratch on open GameFactory data with Causal Forcing.
 
 ---
 

@@ -41,7 +41,7 @@ model_kwargs:
   model_name: /apdcephfs_gy7/share_302035829/victorxyli/Matrix-Game/Matrix-Game-2.0/base_model
 data_path: ./data/action_lmdb
 action_data: true
-action_sharded: false
+action_sharded: true
 generator_cpu_offload: false
 text_encoder_cpu_offload: false
 checkpoint_path: ./ckpts/stage0/model.pt
@@ -97,3 +97,5 @@ action_config:
   - 27
   - 28
   - 29
+action_shard_prefixes:
+- shard
