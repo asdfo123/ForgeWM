@@ -118,12 +118,12 @@ Supported actions: `forward`, `back`, `turn_right`, `turn_left`, `look_up`, `loo
 
 4-stage progressive distillation, each stage builds on the previous:
 
-| Stage | Method | Time (8×H20) |
+| Stage | Method | Steps (8×H20) |
 |-------|--------|--------------|
-| 0 | Bidirectional SFT (domain adaptation) | ~10h |
-| 1 | Teacher-Forcing Causal AR | ~30h |
-| 2 | Consistency Distillation | ~18h |
-| 3 | DMD (4-step real-time) | ~32h |
+| 0 | Bidirectional SFT (domain adaptation) | 4000 |
+| 1 | Teacher-Forcing Causal AR | 10000 |
+| 2 | Consistency Distillation | 6000 |
+| 3 | DMD (4-step real-time) | 2000 |
 
 ```bash
 # Full pipeline
@@ -210,7 +210,7 @@ We also thank the authors of:
 ## Citation
 
 ```bibtex
-@misc{forgewm2025,
+@misc{forgewm2026,
   title={ForgeWM: A Reproducible Training Recipe for Action-Controllable World Models},
   author={ForgeWM Team},
   year={2026},
