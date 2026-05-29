@@ -27,27 +27,28 @@ The community has open model weights, open gameplay data, and open distillation 
 
 ## Results
 
-### ForgeWM (4-step DMD) vs Baseline (Self-Forcing Distillation)
+### ForgeWM (4-step DMD) vs Matrix-Game 2 (Self-Forcing Distillation)
 
-Same reference frame, same action (walk forward). Left: baseline distilled model. Right: ForgeWM Stage 3.
+Same reference frame, same action (walk forward). Left: MG2 official distilled model (Self-Forcing). Right: ForgeWM Stage 3 (Causal Forcing).
 
-| Scene | Baseline (Self-Forcing) | ForgeWM (Causal Forcing) |
-|-------|------------------------|--------------------------|
+| Scene | Matrix-Game 2 | ForgeWM |
+|-------|--------------|---------|
 | Forest | <img src="assets/results/mg2_distill_forest_day_00.gif" width="280"> | <img src="assets/results/forgewm_forest_day_00.gif" width="280"> |
 | Plains | <img src="assets/results/mg2_distill_plains_day_03.gif" width="280"> | <img src="assets/results/forgewm_plains_day_03.gif" width="280"> |
 | Desert | <img src="assets/results/mg2_distill_desert_day_03.gif" width="280"> | <img src="assets/results/forgewm_desert_day_03.gif" width="280"> |
 
-> Both models use 4-step inference at 352×640. ForgeWM trains with Causal Forcing distillation on GameFactory data; baseline uses the original Self-Forcing distilled weights.
+> Both use 4-step inference at 352×640. MG2 uses the official Self-Forcing distilled checkpoint; ForgeWM trains from scratch on GameFactory data with Causal Forcing.
 
 ---
 
 ## Comparison
 
-| Project | Base Model | Control | Paradigm | Data Open | Code Open |
-|---------|-----------|---------|----------|-----------|-----------|
-| **ForgeWM** | Wan2.1-1.3B | Keyboard + Mouse | Causal Forcing | ✅ | ✅ |
-| minWM | HY1.5 / Wan2.1 | Camera pose | Causal Forcing | ❌ | ✅ |
-| HY-GameCraft | HunyuanVideo | Camera | Phased Consistency | ❌ | Partial |
+| Project | Base Model | Control | Paradigm | I2V | Data Open | Train Code |
+|---------|-----------|---------|----------|-----|-----------|------------|
+| **ForgeWM** | Wan2.1-1.3B | Keyboard + Mouse | Causal Forcing | ✅ | ✅ GameFactory | ✅ |
+| MG2 (Skywork) | Wan2.1-1.3B | Keyboard + Mouse | Self Forcing | ✅ | ❌ | ❌ (inference only) |
+| minWM | HY1.5 / Wan2.1 | Camera pose | Causal Forcing | HY TI2V only | ✅ (T2V + camera) | ✅ |
+| HY-GameCraft | HunyuanVideo | Camera | Phased Consistency | ❌ | ❌ | Partial |
 
 ---
 
