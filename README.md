@@ -49,9 +49,9 @@ Same reference frame, same action. Left: MG2 official distilled model. Right: Fo
 |-------|--------------|---------|
 | Forest (turn right) | <img src="assets/results/mg2_forest_turn_right.gif" width="320"> | <img src="assets/results/forge_forest_turn_right.gif" width="320"> |
 | Plains (forward) | <img src="assets/results/mg2_plains_forward.gif" width="320"> | <img src="assets/results/forge_plains_forward.gif" width="320"> |
-| Cave (forward) | <img src="assets/results/mg2_cave_forward.gif" width="320"> | <img src="assets/results/forge_cave_forward.gif" width="320"> |
+| Underwater Cave (forward) | <img src="assets/results/mg2_cave_forward.gif" width="320"> | <img src="assets/results/forge_cave_forward.gif" width="320"> |
 | Desert (back) | <img src="assets/results/mg2_desert_back.gif" width="320"> | <img src="assets/results/forge_desert_back.gif" width="320"> |
-| Rainy night (random) | <img src="assets/results/mg2_night_random.gif" width="320"> | <img src="assets/results/forge_night_random.gif" width="320"> |
+| Rainy sunset (random) | <img src="assets/results/mg2_night_random.gif" width="320"> | <img src="assets/results/forge_night_random.gif" width="320"> |
 | Rainy night (forward) | <img src="assets/results/mg2_sunset_forward.gif" width="320"> | <img src="assets/results/forge_sunset_forward.gif" width="320"> |
 
 **Observations:**
@@ -232,7 +232,7 @@ We also thank the authors of:
 ## Contact
 
 - Email: leeasdfo123@gmail.com
-- WeChat Group: [<img src="assets/wechat.JPG" width="200">](assets/wechat.JPG)
+- [WeChat Group](./assets/wechat.JPG)[<img src="assets/wechat.JPG" width="200">](assets/wechat.JPG)
 
 ---
 
