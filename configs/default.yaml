@@ -1,0 +1,10 @@
+independent_first_frame: false
+warp_denoising_step: false
+weight_decay: 0.01
+same_step_across_blocks: true
+last_step_only: false
+i2v: false
+num_training_frames: 21
+gc_interval: 100
+context_noise: 0
+causal: true

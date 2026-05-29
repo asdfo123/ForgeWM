@@ -1,0 +1,15 @@
+torch>=2.1.0
+torchvision
+omegaconf
+einops
+tqdm
+imageio[ffmpeg]
+imageio-ffmpeg
+safetensors
+diffusers>=0.28.0
+transformers
+accelerate
+wandb
+lmdb
+numpy
+pillow

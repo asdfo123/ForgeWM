@@ -1,0 +1,19 @@
+trainer: score_distillation
+distribution_loss: consistency
+causal: true
+steps: 6000
+num_frame_per_block: 3
+local_attn_size: 6
+lr: 2e-6
+batch_size: 1
+total_batch_size: 8
+image_or_video_shape: [1, 21, 16, 44, 80]
+wandb_project: forgewm
+model_name: ./ckpts/MG2-base
+data_path: ./data/action_lmdb
+generator_ckpt: ./ckpts/stage1/model.pt
+checkpoint_path: ./ckpts/stage2/model.pt
+action_config:
+  mouse_dim_in: 2
+  keyboard_dim_in: 6
+  blocks: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
