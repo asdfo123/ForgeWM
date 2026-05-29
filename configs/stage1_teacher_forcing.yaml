@@ -46,6 +46,9 @@ generator_ckpt: ./ckpts/stage0/model.pt
 action_config:
   mouse_dim_in: 2
   keyboard_dim_in: 6
+  # NOTE: MG2 base weights have keyboard_dim_in=4. We use 6 (extra 2 dims
+  # for future actions). Dims 5-6 are randomly initialized on first load
+  # and learned during training. Data keyboard is 4-dim, padded to 6 at runtime.
   hidden_size: 128
   keyboard_hidden_dim: 1024
   mouse_hidden_dim: 1024

@@ -114,7 +114,15 @@ class WanVAEWrapper(nn.Module):
 class WanDiffusionWrapper(nn.Module):
     @staticmethod
     def _resolve_model_path(model_name: str) -> str:
-        return model_name if os.path.isabs(model_name) else f"wan_models/{model_name}/"
+        # Accept absolute paths, relative paths (./ckpts/...), or bare names (legacy)
+        if os.path.isabs(model_name) or os.path.exists(model_name):
+            return model_name
+        # Legacy fallback: bare model name → look in wan_models/
+        fallback = f"wan_models/{model_name}/"
+        if os.path.exists(fallback):
+            return fallback
+        # Return as-is and let downstream raise a clear error
+        return model_name
 
     @staticmethod
     def _find_first_existing(directory: str, candidates: list[str]) -> Optional[str]:
