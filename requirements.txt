@@ -18,3 +18,4 @@ huggingface_hub
 flash-attn>=2.5.0
 ftfy
 regex
+ninja
