@@ -296,6 +296,9 @@ def main():
     for frame in video_np:
         writer.append_data(frame)
     writer.close()
+    # Release VAE internal cache
+    if hasattr(pipeline, "vae") and hasattr(pipeline.vae, "model"):
+        pipeline.vae.model.clear_cache()
     print(f"Saved: {args.output_path} ({len(video_np)} frames)")
 
 
