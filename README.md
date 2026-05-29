@@ -3,9 +3,16 @@
 </p>
 
 <p align="center">
-  <b>Open-source, reproducible training recipe for action-controllable Minecraft world models.</b>
+  <b>Train a real-time, playable Minecraft world model on 8 GPUs — using only open weights, open data, and open methods.</b>
 </p>
 
+
+<p align="center">
+  <img src="https://img.shields.io/badge/license-Apache%202.0-blue">
+  <img src="https://img.shields.io/badge/python-3.10+-green">
+  <img src="https://img.shields.io/badge/GPUs-8×H20-orange">
+  <a href="你的arXiv链接"><img src="https://img.shields.io/badge/arXiv-coming%20soon-red"></a>
+</p>
 <p align="center">
   <a href="#results">Results</a> •
   <a href="#quick-start">Quick Start</a> •
@@ -21,7 +28,11 @@ ForgeWM is an open-source framework for training interactive world models that r
 
 ### Why does this exist?
 
-The community has open model weights, open gameplay data, and open distillation methods — but no single project connects them into a working, reproducible pipeline for action-conditioned world models. ForgeWM fills that gap.
+[Matrix-Game 2](https://github.com/SkyworkAI/Matrix-Game) open-sourced the weights — but not the training data or the training code.
+
+[Causal Forcing](https://github.com/thu-ml/Causal-Forcing) gave the community a strong distillation paradigm, and [minWM](https://github.com/shengshu-ai/minWM) provides an excellent open reference for it on camera-controlled video. But that line targets continuous camera trajectories on general T2V/TI2V backbones — not the discrete keyboard-and-mouse control that interactive games actually use.
+
+ForgeWM fills the remaining gap: a fully open, end-to-end pipeline that brings Causal Forcing to discrete-action, game-native world models — built on the MG2 lineage, trained on open [GameFactory](https://github.com/KlingAIResearch/GameFactory) data, reproducible on 8 GPUs.
 
 ---
 
@@ -123,7 +134,7 @@ ForgeWM integrates work from multiple research groups:
 
 | Component | Source |
 |-----------|--------|
-| Base model | [Matrix-Game 2](https://github.com/skywork-ai/matrix-game) |
+| Base model | [Matrix-Game 2](https://github.com/SkyworkAI/Matrix-Game) |
 | Training data | [GameFactory](https://github.com/KlingAIResearch/GameFactory) |
 | Distillation | [Causal Forcing](https://github.com/thu-ml/Causal-Forcing) |
 
@@ -143,7 +154,7 @@ We also thank the authors of:
 @misc{forgewm2025,
   title={ForgeWM: A Reproducible Training Recipe for Action-Controllable World Models},
   author={ForgeWM Team},
-  year={2025},
+  year={2026},
   url={https://github.com/asdfo123/ForgeWM}
 }
 ```

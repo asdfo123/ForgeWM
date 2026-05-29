@@ -3,7 +3,13 @@ import torch
 
 from utils.wan_wrapper import WanDiffusionWrapper, WanTextEncoder, WanVAEWrapper
 
-from demo_utils.memory import gpu, get_cuda_free_memory_gb, DynamicSwapInstaller, move_model_to_device_with_memory_preservation
+try:
+    from demo_utils.memory import gpu, get_cuda_free_memory_gb, DynamicSwapInstaller, move_model_to_device_with_memory_preservation
+except ImportError:
+    gpu = None
+    def get_cuda_free_memory_gb(*a, **kw): return 80.0
+    DynamicSwapInstaller = None
+    move_model_to_device_with_memory_preservation = None
 import tqdm
 
 
