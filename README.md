@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>Train a real-time, playable Minecraft world model on 8 GPUs — using only open weights, open data, and open methods.</b>
+  <b>Train a real-time, playable Minecraft world model on 8 GPUs —  keyboard & mouse control, fully open and reproducible.</b>
 </p>
 
 
@@ -24,15 +24,16 @@
 
 ## About
 
-ForgeWM is an open-source framework for training interactive world models that respond to keyboard and mouse inputs. We integrate existing open-source components — a pre-trained I2V backbone, community gameplay data, and a multi-stage distillation pipeline — into an end-to-end system that anyone can reproduce on 8 GPUs.
+ForgeWM is an open-source framework for training interactive world models that respond to keyboard and mouse inputs. We integrate [Matrix-Game 2](https://github.com/SkyworkAI/Matrix-Game)'s game-native I2V backbone, [GameFactory](https://github.com/KlingAIResearch/GameFactory)'s open Minecraft data, and the [Causal Forcing](https://github.com/thu-ml/Causal-Forcing) distillation pipeline into an end-to-end system reproducible on 8 GPUs.
+
 
 ### Why does this exist?
 
-[Matrix-Game 2](https://github.com/SkyworkAI/Matrix-Game) open-sourced the weights — but not the training data or the training code.
+Matrix-Game 2 open-sourced the weights — but not the training data or the training code.
 
-[Causal Forcing](https://github.com/thu-ml/Causal-Forcing) gave the community a strong distillation paradigm, and [minWM](https://github.com/shengshu-ai/minWM) provides an excellent open reference for it on camera-controlled video. But that line targets continuous camera trajectories on general T2V/TI2V backbones — not the discrete keyboard-and-mouse control that interactive games actually use.
+Causal Forcing (and Causal Forcing++) gave the community a strong distillation paradigm, and [minWM](https://github.com/shengshu-ai/minWM) provides an excellent open reference for it on camera-controlled video. But that line targets continuous camera trajectories on general T2V/TI2V backbones — not the discrete keyboard-and-mouse control that interactive games actually use.
 
-ForgeWM fills the remaining gap: a fully open, end-to-end pipeline that brings Causal Forcing to discrete-action, game-native world models — built on the MG2 lineage, trained on open [GameFactory](https://github.com/KlingAIResearch/GameFactory) data, reproducible on 8 GPUs.
+ForgeWM fills the remaining gap: a fully open, end-to-end pipeline that brings Causal Forcing to discrete-action, game-native world models — built on the MG2 lineage, trained on open GameFactory data, reproducible on 8 GPUs.
 
 ---
 
@@ -54,8 +55,10 @@ Same reference frame, same action. Left: MG2 official distilled model. Right: Fo
 **Observations:**
 
 - **Overall quality**: ForgeWM largely reproduces MG2's generation quality at 4-step inference. Temporal smoothness is slightly better; fine-grained texture detail is slightly weaker (likely due to smaller training data: GameFactory ~70h vs MG2's proprietary dataset).
-- **"Underwater" artifact fixed**: MG2's original model tends to drift into underwater/ocean textures when encountering rain, blue sky, or dark scenes (rows 5–6) — likely caused by an over-representation of ocean footage in its proprietary training data. ForgeWM, trained on GameFactory's balanced action distribution, does not exhibit this failure mode.
+- **"Underwater" artifact fixed**: MG2's original model tends to drift into underwater/ocean textures when encountering rain, blue sky, or dark scenes (rows 4–6) — likely caused by an over-representation of ocean footage in its proprietary training data. ForgeWM, trained on GameFactory's balanced action distribution, does not exhibit this failure mode.
 - **Action controllability**: Both models respond correctly to keyboard/mouse inputs. ForgeWM's Causal Forcing distillation preserves action fidelity through all 4 stages.
+- At the official 360p inference setting, we observed that MG2's HUD elements (e.g. the hotbar) gradually shrink over a rollout — a possible train/inference resolution mismatch. ForgeWM does not show this under our setting.
+
 
 > Both models use 4-step inference at 352×640. MG2 uses the official Self-Forcing distilled checkpoint; ForgeWM trains from scratch on open GameFactory data with Causal Forcing.
 
@@ -68,7 +71,6 @@ Same reference frame, same action. Left: MG2 official distilled model. Right: Fo
 | **ForgeWM** | Wan2.1-1.3B | Keyboard + Mouse | Causal Forcing | ✅ | ✅ GameFactory | ✅ |
 | MG2 (Skywork) | Wan2.1-1.3B | Keyboard + Mouse | Self Forcing | ✅ | ❌ | ❌ (inference only) |
 | minWM | HY1.5 / Wan2.1 | Camera pose | Causal Forcing | HY only | ✅ (camera data) | ✅ |
-| HY-GameCraft | HunyuanVideo | Camera | Phased Consistency | ❌ | ❌ | Partial |
 
 > minWM's HY15 line supports TI2V (text+image→video); the Wan2.1 line is T2V+camera only. Their open data is camera-trajectory based, not game-specific keyboard/mouse actions.
 

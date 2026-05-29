@@ -55,12 +55,11 @@ wandb_entity: disabled
 wandb_project: forgewm
 model_kwargs:
   timestep_shift: 5.0
-  model_name: /apdcephfs_gy7/share_302035829/victorxyli/Matrix-Game/Matrix-Game-2.0/base_model
+  model_name: ./ckpts/MG2-base
 data_path: ./data/action_lmdb
 action_data: true
 action_sharded: true
 generator_ckpt: ./ckpts/stage1/model.pt
-checkpoint_path: ./ckpts/stage2/model.pt
 action_config:
   mouse_dim_in: 2
   keyboard_dim_in: 6
