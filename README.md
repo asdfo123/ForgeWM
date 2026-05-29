@@ -168,10 +168,25 @@ The script:
 
 ## Architecture
 
-- **Keyboard (discrete)**: Cross-attention injection into each transformer block
-- **Mouse (continuous)**: Concatenation with sliding-window grouping (VAE temporal compression ratio = 4)
-- **History conditioning**: Channel-concat I2V + CLIP visual context
-- **Long-video**: Block-wise causal attention + sliding window (local_attn_size=6)
+### I2V Conditioning (First-Frame Fidelity)
+
+Unlike T2V models that generate from text alone, ForgeWM uses a three-pathway image conditioning mechanism inherited from Matrix-Game 2:
+
+1. **Channel-concat**: The first frame is VAE-encoded and concatenated channel-wise with the noise input (`cond_concat = [4-ch mask | 16-ch img_latent]`, 20 channels total). A binary mask marks frame 0 as "real" and subsequent frames as "to generate". This gives the model pixel-level reference for the opening frame.
+2. **CLIP visual context**: The first frame is separately encoded through a CLIP vision encoder into a 257-token sequence, injected via cross-attention at every transformer block. This provides high-level semantic guidance (scene type, lighting, objects) that persists across the entire generation.
+3. **Causal history**: During autoregressive rollout, previously generated (clean) frames are cached in the KV store, so each new chunk attends to its own decoded history — not just the initial frame.
+
+This is why the "I2V ✅" in our comparison table is substantive: it's not a simple image prompt, but a structured conditioning pipeline that enforces first-frame fidelity while allowing the model to evolve the scene through actions.
+
+### Action Injection
+
+- **Keyboard (discrete)**: Cross-attention injection into each transformer block — keyboard actions are embedded and attend to latent frame tokens
+- **Mouse (continuous)**: Concatenation with sliding-window grouping (VAE temporal compression ratio = 4) — continuous deltas are grouped per-frame and concatenated with latent features
+
+### Temporal Architecture
+
+- **Block-wise causal attention**: frames are grouped into chunks of `num_frame_per_block=3`; within a chunk, attention is bidirectional; across chunks, strictly causal
+- **Sliding window** (`local_attn_size=6`): each chunk only attends to the 6 most recent frames, enabling unbounded-length generation at inference without memory growth
 
 ---
 
