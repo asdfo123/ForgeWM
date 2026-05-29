@@ -133,6 +133,37 @@ torchrun --nproc_per_node=8 train.py --config_path configs/stage3_dmd.yaml --log
 
 ---
 
+## Data Preparation
+
+You can either download the pre-encoded LMDB directly, or build it yourself from the raw GameFactory dataset.
+
+### Option A: Download pre-encoded data (recommended)
+
+```bash
+huggingface-cli download asdfo123/ForgeWM-data --local-dir ./data/action_lmdb --repo-type dataset
+```
+
+### Option B: Build from GF-Minecraft
+
+Requires the [GameFactory](https://github.com/KlingAIResearch/GameFactory) GF-Minecraft dataset (~70h gameplay videos + action labels).
+
+```bash
+# 1. Download GF-Minecraft (see GameFactory repo for instructions)
+#    Expected structure: data_2003/video/*.mp4 + data_2003/metadata/*.json
+
+# 2. Encode into sharded LMDB (8 GPUs, ~2-3 hours)
+GF_DATA=/path/to/GF-Minecraft/data_2003 bash scripts/prepare_data_all.sh
+```
+
+The script:
+- Resizes videos to 352×640 (aspect-preserving crop)
+- Encodes through Wan2.1 VAE → latent (21, 16, 44, 80) per clip
+- Flips pitch sign (GF: +pitch = look-down → MG2: mouse[0] > 0 = look-up)
+- Parses keyboard into 4-dim one-hot (W/S/A/D)
+- Outputs 10 shards × 4000 clips = 40,000 training clips (~89 GB total)
+
+---
+
 ## Architecture
 
 - **Keyboard (discrete)**: Cross-attention injection into each transformer block
