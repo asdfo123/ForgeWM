@@ -174,9 +174,8 @@ Unlike T2V models that generate from text alone, ForgeWM uses a three-pathway im
 
 1. **Channel-concat**: The first frame is VAE-encoded and concatenated channel-wise with the noise input (`cond_concat = [4-ch mask | 16-ch img_latent]`, 20 channels total). A binary mask marks frame 0 as "real" and subsequent frames as "to generate". This gives the model pixel-level reference for the opening frame.
 2. **CLIP visual context**: The first frame is separately encoded through a CLIP vision encoder into a 257-token sequence, injected via cross-attention at every transformer block. This provides high-level semantic guidance (scene type, lighting, objects) that persists across the entire generation.
-3. **Causal history**: During autoregressive rollout, previously generated (clean) frames are cached in the KV store, so each new chunk attends to its own decoded history — not just the initial frame.
+3. **Causal history**: During autoregressive rollout, previously generated (clean) frames are cached in the KV store.
 
-This is why the "I2V ✅" in our comparison table is substantive: it's not a simple image prompt, but a structured conditioning pipeline that enforces first-frame fidelity while allowing the model to evolve the scene through actions.
 
 ### Action Injection
 
@@ -192,13 +191,21 @@ This is why the "I2V ✅" in our comparison table is substantive: it's not a sim
 
 ## Roadmap
 
+### Released
 - ✅ 4-stage training pipeline (Bid SFT → TF AR → CD → DMD)
 - ✅ Action-conditioned inference
 - ✅ Stage 0 & Stage 3 checkpoints ([HuggingFace](https://huggingface.co/asdfo123/ForgeWM))
 - ✅ Pre-encoded training data ([HuggingFace](https://huggingface.co/datasets/asdfo123/ForgeWM-data))
-- 🚧 Stage 1 & Stage 2 checkpoints (training in progress)
+
+### In progress
+- 🚧 Stage 1 & Stage 2 intermediate checkpoints
 - 🚧 Interactive real-time demo
 - 🚧 Tech report
+
+### Future / community
+- 💭 Multi-game support beyond Minecraft (FPS, racing, etc.)
+- 💭 Larger backbones (Wan2.2-5B, HY1.5)
+- 💭 Open to PRs & Collaboration.
 
 ---
 
