@@ -84,6 +84,7 @@ Same reference frame, same action. Left: MG2 official distilled model. Right: Fo
 
 ```bash
 pip install -r requirements.txt
+pip install flash-attn --no-build-isolation
 ```
 
 ### Download Models & Data
