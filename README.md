@@ -14,6 +14,7 @@
   <a href="https://huggingface.co/asdfo123/ForgeWM"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Models-yellow"></a>
   <a href="https://huggingface.co/datasets/asdfo123/ForgeWM-data"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Data-yellow"></a>
   <a href="你的arXiv链接"><img src="https://img.shields.io/badge/arXiv-coming%20soon-red"></a>
+  <a href="assets/wechat.JPG"><img src="https://img.shields.io/badge/WeChat-Group-07C160?logo=wechat&logoColor=white"></a>
 </p>
 <p align="center">
   <a href="#results">Results</a> •
