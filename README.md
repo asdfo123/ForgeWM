@@ -96,7 +96,7 @@ pip install flash-attn --no-build-isolation
 # MG2 base model (~9 GB)
 bash scripts/download_models.sh
 
-# ForgeWM checkpoints (Stage 0 + Stage 3 DMD)
+# ForgeWM checkpoints (all 4 stages: stage0 / stage1 / stage2 / stage3)
 huggingface-cli download asdfo123/ForgeWM --local-dir ./ckpts --repo-type model
 
 # Training data (pre-encoded 360p LMDB, ~89 GB)
@@ -198,11 +198,10 @@ Unlike T2V models that generate from text alone, ForgeWM uses a three-pathway im
 ### Released
 - ✅ 4-stage training pipeline (Bid SFT → TF AR → CD → DMD)
 - ✅ Action-conditioned inference
-- ✅ Stage 0 & Stage 3 checkpoints ([HuggingFace](https://huggingface.co/asdfo123/ForgeWM))
+- ✅ All 4 stage checkpoints — Stage 0 / 1 / 2 / 3 ([HuggingFace](https://huggingface.co/asdfo123/ForgeWM))
 - ✅ Pre-encoded training data ([HuggingFace](https://huggingface.co/datasets/asdfo123/ForgeWM-data))
 
 ### In progress
-- 🚧 Stage 1 & Stage 2 intermediate checkpoints
 - 🚧 Interactive real-time demo
 - 🚧 Tech report
 
