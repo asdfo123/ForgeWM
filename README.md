@@ -173,7 +173,7 @@ The script:
 ## Architecture
 
 <p align="center">
-  <img src="assets/architecture.png" width="700">
+  <img src="assets/architecture.png" >
 </p>
 
 > Same Archtecture as Matrix-Game-2: The foundation model is derived from WanX. By removing the text branch and adding action modules, the model predicts next frames only from visual contents and corresponding actions.
