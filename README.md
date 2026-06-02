@@ -176,7 +176,7 @@ The script:
   <img src="assets/architecture.png" >
 </p>
 
-> **Architecture is identical to [Matrix-Game 2](https://github.com/SkyworkAI/Matrix-Game)** — derived from WanX by removing the text branch and adding a hybrid action module (keyboard cross-attention + mouse channel concat). ForgeWM does **not** propose a new architecture; our contribution is the **open training recipe + data + weights** that reproduces this architecture from scratch on public data. *Figure adapted from the Matrix-Game 2 paper.*
+> **Architecture is identical to [Matrix-Game 2](https://github.com/SkyworkAI/Matrix-Game)** — derived from WanX by removing the text branch and adding a hybrid action module (keyboard cross-attention + mouse channel concat). *Figure adapted from the Matrix-Game 2 paper.*
 
 ### I2V Conditioning (First-Frame Fidelity)
 
