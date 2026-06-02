@@ -172,6 +172,12 @@ The script:
 
 ## Architecture
 
+<p align="center">
+  <img src="assets/architecture.png" width="700">
+</p>
+
+> Same Archtecture as Matrix-Game-2: The foundation model is derived from WanX. By removing the text branch and adding action modules, the model predicts next frames only from visual contents and corresponding actions.
+
 ### I2V Conditioning (First-Frame Fidelity)
 
 Unlike T2V models that generate from text alone, ForgeWM uses a three-pathway image conditioning mechanism inherited from Matrix-Game 2:
