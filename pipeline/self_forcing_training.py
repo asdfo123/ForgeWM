@@ -298,17 +298,28 @@ class SelfForcingTrainingPipeline:
             output[:, current_start_frame:current_start_frame + current_num_frames] = denoised_pred
 
             # Step 3.3: rerun with timestep zero to update the cache
-            # NOTE: We skip this rerun for the grad-enabled block as a
-            # conservative choice — the original CF runs it unconditionally,
-            # but skipping it does not affect this training step (we broke
-            # out of the denoising loop with `break` at the grad step, and
-            # nothing after this block reads the cache we were about to
-            # refresh in this iteration).  Revisit this if extending to
-            # rolling-forcing / longer rollouts.
-            was_grad_block = (current_start_frame >= start_gradient_frame_index)
-            if was_grad_block:
-                current_start_frame += current_num_frames
-                continue
+            #
+            # ─── Cache-refresh fix ───────────────────────────────────────────
+            # Previously we skipped this rerun for grad-enabled blocks (i.e.
+            # all chunks 1..6 when num_training_frames=22 since
+            # start_gradient_frame_index = num_output_frames - 21 = 1).
+            # That created a train/inference distribution shift on the KV
+            # cache: at inference each chunk goes through the full 4-step
+            # denoising chain so its cache is near-clean (≈ t=0); at training
+            # we used to leave cache at the exit_flags step (often noisy).
+            #
+            # CF orig / minWM / SF orig all run this refresh unconditionally.
+            # Restoring the original behavior closes the gap and empirically
+            # fixes HUD shrinkage / OOD drift on long-video rollouts.
+            #
+            # The previous "skip" branch is kept commented below for
+            # reference; do not re-enable without re-analyzing.
+            #
+            # was_grad_block = (current_start_frame >= start_gradient_frame_index)
+            # if was_grad_block:
+            #     current_start_frame += current_num_frames
+            #     continue
+            # ─────────────────────────────────────────────────────────────────
 
 
             context_timestep = torch.ones_like(timestep) * self.context_noise
