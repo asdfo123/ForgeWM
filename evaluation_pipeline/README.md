@@ -48,6 +48,7 @@ evaluation_pipeline/data/
 │   │   ├── hyworld_aligned/             # 462 generated clips
 │   │   ├── action_trajectory/           # KCtrl results
 │   │   └── action_idm/                  # mouse-control results
+│   ├── constant_action_aligned77/        # 77-frame VBench visual inputs/results
 │   ├── perceptual/                      # frozen Full-1000 LPIPS results
 │   └── metrics/                         # clean reruns and final main table
 └── native_budget_eval/                  # optional 1/2-step budget ablation
@@ -124,6 +125,17 @@ Recompute all metrics from the generated videos:
 ```bash
 bash evaluation_pipeline/run_evaluation.sh all
 ```
+
+Before the first VBench run, create the strictly frame-aligned visual suite:
+
+```bash
+bash evaluation_pipeline/scripts/prepare_constant_action_aligned77.sh
+```
+
+This uses the first 77 frames of every model output without re-encoding the
+H.264 video stream. VBench Aesthetic and Imaging Quality read every input frame,
+so they must use this directory rather than mixing 81-frame ForgeWM/Matrix-Game
+outputs with 77-frame HY-WorldPlay outputs.
 
 Stages can be launched or resumed independently:
 

@@ -91,12 +91,14 @@ def choose_shards(primary: Path, fallback: Path, expected: int) -> list[dict[str
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--main-root", type=Path, required=True)
+    parser.add_argument("--visual-root", type=Path)
     parser.add_argument("--metric-root", type=Path)
     args = parser.parse_args()
     root = args.main_root
     metric_root = args.metric_root or root / "metrics"
     paired = root / "paired_full1000"
     constant = root / "constant_action"
+    visual = args.visual_root or constant
 
     temporal_path = metric_root / "paired_temporal_action_metrics.tsv"
     if not temporal_path.is_file():
@@ -121,7 +123,7 @@ def main() -> None:
     }
     for model in MODELS:
         constant_model = CONSTANT_DIR[model]
-        vbench = latest_vbench(constant / constant_model)
+        vbench = latest_vbench(visual / constant_model)
         perceptual = choose_shards(
             metric_root / "perceptual" / model,
             root / "perceptual" / model,

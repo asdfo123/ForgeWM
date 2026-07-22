@@ -32,7 +32,8 @@ wait_all() {
 
 validate_inputs() {
   "$PYTHON_GPU" "$SCRIPTS/validate_main_table.py" \
-    --main-root "$MAIN_ROOT" --gt-manifest "$GT_MANIFEST"
+    --main-root "$MAIN_ROOT" --visual-root "$VISUAL_ROOT" \
+    --gt-manifest "$GT_MANIFEST"
 }
 
 run_temporal() {
@@ -65,7 +66,7 @@ run_depth() {
 run_vbench() {
   FORGEWM_ROOT="$FORGEWM_ROOT" ROOT_DIR="$FORGEWM_ROOT" \
     VBENCH_ROOT="$VBENCH_ROOT" VBENCH_LOCAL_CKPT="$VBENCH_LOCAL_CKPT" \
-    BAKEOFF="$CONSTANT_ROOT" MODELS="$CONSTANT_MODELS" GPU_LIST="$GPU_LIST" \
+    BAKEOFF="$VISUAL_ROOT" MODELS="$CONSTANT_MODELS" GPU_LIST="$GPU_LIST" \
     PYTHON_BIN="$PYTHON_GPU" bash "$SCRIPTS/run_vbench_parallel.sh" \
     >"$LOG_ROOT/constant_vbench_driver.log" 2>&1
 }
@@ -128,7 +129,8 @@ run_control() {
 
 run_summary() {
   "$PYTHON_GPU" "$SCRIPTS/summarize_main_table.py" \
-    --main-root "$MAIN_ROOT" --metric-root "$METRIC_ROOT" \
+    --main-root "$MAIN_ROOT" --visual-root "$VISUAL_ROOT" \
+    --metric-root "$METRIC_ROOT" \
     | tee "$LOG_ROOT/main_table_summary.log"
 }
 

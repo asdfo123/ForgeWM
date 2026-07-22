@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 
@@ -38,14 +40,45 @@ def count_files(path: Path, pattern: str) -> int:
     return sum(1 for item in path.glob(pattern) if item.is_file())
 
 
+def probe_visual_video(path: Path) -> tuple[str, str, str, str]:
+    output = subprocess.check_output(
+        [
+            "ffprobe", "-v", "error", "-select_streams", "v:0",
+            "-show_entries", "stream=width,height,avg_frame_rate,nb_frames",
+            "-of", "csv=p=0", str(path),
+        ],
+        text=True,
+    ).strip()
+    values = tuple(output.split(","))
+    if len(values) != 4:
+        raise RuntimeError(f"Unexpected ffprobe output for {path}: {output!r}")
+    return values
+
+
+def validate_visual_videos(video_dir: Path) -> int:
+    videos = sorted(video_dir.glob("*.mp4"))
+    with ThreadPoolExecutor(max_workers=24) as executor:
+        metadata = list(executor.map(probe_visual_video, videos))
+    expected = ("640", "352", "12/1", "77")
+    invalid = [str(path) for path, values in zip(videos, metadata) if values != expected]
+    if invalid:
+        raise RuntimeError(
+            f"Aligned visual inputs must be 640x352, 12 FPS, 77 frames; "
+            f"invalid examples: {invalid[:3]}"
+        )
+    return len(videos)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--main-root", type=Path, required=True)
+    parser.add_argument("--visual-root", type=Path)
     parser.add_argument("--gt-manifest", type=Path, required=True)
     args = parser.parse_args()
 
     paired = args.main_root / "paired_full1000"
     constant = args.main_root / "constant_action"
+    visual = args.visual_root or constant
     gt_rows = tsv_rows(args.gt_manifest)
     if len(gt_rows) != 1000:
         raise RuntimeError(f"GT manifest has {len(gt_rows)} rows, expected 1000")
@@ -82,6 +115,16 @@ def main() -> None:
         report["constant"][model] = {
             "manifest": len(rows), "videos": videos, "images": images, "scenes": len(scenes)
         }
+
+        visual_root = visual / model
+        visual_videos = validate_visual_videos(visual_root / "videos")
+        visual_images = count_files(visual_root / "images", "*.png")
+        if (visual_videos, visual_images) != (462, 462):
+            raise RuntimeError(
+                f"Incomplete aligned visual input {model}: "
+                f"videos={visual_videos} images={visual_images}"
+            )
+        report["constant"][model]["aligned_visual_videos"] = visual_videos
 
     print(json.dumps(report, indent=2, sort_keys=True))
 
