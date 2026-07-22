@@ -28,13 +28,11 @@ def rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle, delimiter="\t"))
 
 
-def latest_vbench(model_dir: Path) -> dict:
+def latest_vbench(model_dir: Path, keys: tuple[str, ...], expected: int) -> dict:
     candidates = []
     for name in glob.glob(str(model_dir / "eval" / "*eval_results.json")):
         payload = json.loads(Path(name).read_text(encoding="utf-8"))
-        if all(len(payload.get(key, [None, []])[1]) == 462 for key in (
-            "imaging_quality", "aesthetic_quality"
-        )):
+        if all(len(payload.get(key, [None, []])[1]) == expected for key in keys):
             candidates.append((Path(name).stat().st_mtime, payload))
     if not candidates:
         raise RuntimeError(f"No complete VBench result under {model_dir}")
@@ -123,7 +121,16 @@ def main() -> None:
     }
     for model in MODELS:
         constant_model = CONSTANT_DIR[model]
-        vbench = latest_vbench(visual / constant_model)
+        visual_vbench = latest_vbench(
+            visual / constant_model,
+            ("imaging_quality", "aesthetic_quality"),
+            462,
+        )
+        temporal_vbench = latest_vbench(
+            paired / model,
+            ("subject_consistency",),
+            1000,
+        )
         perceptual = choose_shards(
             metric_root / "perceptual" / model,
             root / "perceptual" / model,
@@ -149,25 +156,32 @@ def main() -> None:
         if len(trajectory) != 462 or idm["successful_videos"] != 462:
             raise RuntimeError(f"Incomplete control metrics for {model}")
 
-        imaging = float(vbench["imaging_quality"][0])
+        imaging = float(visual_vbench["imaging_quality"][0])
         if imaging > 1:
             imaging /= 100.0
         summary["models"][model] = {
             "label": LABELS[model],
             "imaging_quality": imaging,
             "lpips_gt": float(np.mean([float(row["lpips_gt"]) for row in perceptual])),
-            "aesthetic_quality": float(vbench["aesthetic_quality"][0]),
+            "aesthetic_quality": float(visual_vbench["aesthetic_quality"][0]),
+            "subject_consistency": float(temporal_vbench["subject_consistency"][0]),
             "flow_profile_cosine": float(np.mean([
                 float(row["flow_profile_cosine"]) for row in temporal
             ])),
-            "depth_gt": float(np.mean([float(row["depth_gt"]) for row in depth])),
-            "action_sign_accuracy": float(np.nanmean([
-                float(row["action_signature_sign_accuracy"]) for row in temporal
-            ])),
+            "keyboard_accuracy": float(idm["keyboard_accuracy"]),
             "kctrl": kctrl(trajectory),
             "mouse_accuracy": float(idm["mouse_accuracy"]),
+            "diagnostics": {
+                "depth_gt": float(np.mean([
+                    float(row["depth_gt"]) for row in depth
+                ])),
+                "action_sign_accuracy": float(np.nanmean([
+                    float(row["action_signature_sign_accuracy"]) for row in temporal
+                ])),
+            },
             "counts": {
-                "vbench": 462, "perceptual": len(perceptual), "depth": len(depth),
+                "visual_vbench": 462, "temporal_vbench": 1000,
+                "perceptual": len(perceptual), "depth": len(depth),
                 "temporal": len(temporal), "trajectory": len(trajectory),
                 "idm": idm["successful_videos"],
             },
@@ -180,16 +194,30 @@ def main() -> None:
     lines = [
         "# Paper main-table evaluation",
         "",
-        "| Model | Imaging Quality ↑ | LPIPS ↓ | Aesthetic Quality ↑ | Flow Prof. ↑ | Depth ↑ | Sign Acc. ↑ | KCtrl ↑ | Mouse Acc. ↑ |",
+        "| Model | Imaging Quality ↑ | LPIPS ↓ | Aesthetic Quality ↑ | Subject Consistency ↑ | Flow Profile Cosine ↑ | Keyboard Acc. ↑ | KCtrl ↑ | Mouse Acc. ↑ |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for model in ("mg2", "hyworld", "forgewm"):
         value = summary["models"][model]
         lines.append(
             f"| {value['label']} | {value['imaging_quality']:.4f} | {value['lpips_gt']:.4f} | "
-            f"{value['aesthetic_quality']:.4f} | {value['flow_profile_cosine']:.4f} | "
-            f"{value['depth_gt']:.4f} | {value['action_sign_accuracy']:.4f} | "
+            f"{value['aesthetic_quality']:.4f} | {value['subject_consistency']:.4f} | "
+            f"{value['flow_profile_cosine']:.4f} | {value['keyboard_accuracy']:.4f} | "
             f"{value['kctrl']:.4f} | {value['mouse_accuracy']:.4f} |"
+        )
+    lines.extend([
+        "",
+        "## Reference-aligned diagnostics",
+        "",
+        "| Model | Depth Similarity ↑ | Action Sign Accuracy ↑ |",
+        "|---|---:|---:|",
+    ])
+    for model in ("mg2", "hyworld", "forgewm"):
+        value = summary["models"][model]
+        diagnostic = value["diagnostics"]
+        lines.append(
+            f"| {value['label']} | {diagnostic['depth_gt']:.4f} | "
+            f"{diagnostic['action_sign_accuracy']:.4f} |"
         )
     text = "\n".join(lines) + "\n"
     (metric_root / "main_table_summary.md").write_text(text, encoding="utf-8")

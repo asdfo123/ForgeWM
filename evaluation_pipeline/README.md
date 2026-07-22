@@ -16,11 +16,20 @@ below before running the complete evaluation.
 | Imaging Quality | constant single-action videos | no GT video | 462 |
 | Aesthetic Quality | constant single-action videos | no GT video | 462 |
 | LPIPS | shared action rollouts | paired GT video | 1,000 |
+| Subject Consistency | shared action rollouts | no GT video | 1,000 |
 | Flow Profile Cosine | shared action rollouts | paired GT video | 1,000 |
-| Depth Similarity | shared action rollouts | paired GT video | 1,000 |
-| Action Sign Accuracy | shared action rollouts | paired GT/action | 1,000 |
+| Keyboard Accuracy | constant translation videos | commanded action | 308 |
 | KCtrl | opposite constant-action pairs | commanded action | 462 |
 | Mouse Accuracy | constant turn videos | commanded action | 462 |
+
+Depth Similarity and Action Sign Accuracy are reported separately as
+reference-aligned diagnostics on the 1,000 shared rollouts. The primary temporal
+comparison pairs standard VBench Subject Consistency with Flow Profile Cosine,
+which measures agreement with the GT motion profile rather than another
+appearance-consistency variant.
+The complete VBench output remains available in each model's `eval/` directory,
+including I2V Subject Consistency, Motion Smoothness, and the other standard
+dimensions not selected for the compact primary table.
 
 The constant-action suite contains 77 initial frames and six controls:
 `forward`, `back`, `left`, `right`, `turn_left`, and `turn_right`. Thus each

@@ -67,8 +67,16 @@ run_vbench() {
   FORGEWM_ROOT="$FORGEWM_ROOT" ROOT_DIR="$FORGEWM_ROOT" \
     VBENCH_ROOT="$VBENCH_ROOT" VBENCH_LOCAL_CKPT="$VBENCH_LOCAL_CKPT" \
     BAKEOFF="$VISUAL_ROOT" MODELS="$CONSTANT_MODELS" GPU_LIST="$GPU_LIST" \
+    DIMS="aesthetic_quality imaging_quality" \
     PYTHON_BIN="$PYTHON_GPU" bash "$SCRIPTS/run_vbench_parallel.sh" \
     >"$LOG_ROOT/constant_vbench_driver.log" 2>&1
+
+  FORGEWM_ROOT="$FORGEWM_ROOT" ROOT_DIR="$FORGEWM_ROOT" \
+    VBENCH_ROOT="$VBENCH_ROOT" VBENCH_LOCAL_CKPT="$VBENCH_LOCAL_CKPT" \
+    BAKEOFF="$PAIRED_ROOT" MODELS="$PAIRED_MODELS" GPU_LIST="$GPU_LIST" \
+    DIMS="subject_consistency" \
+    PYTHON_BIN="$PYTHON_GPU" bash "$SCRIPTS/run_vbench_parallel.sh" \
+    >"$LOG_ROOT/paired_vbench_driver.log" 2>&1
 }
 
 run_perceptual() {
