@@ -9,8 +9,8 @@ from pathlib import Path
 from huggingface_hub import snapshot_download
 
 
-REPO_ID = "Lynn031108/ForgeWM-GT-1000"
-REVISION = "1d66e45d9257bd79eb3f34d1d5fe4ec044cf4ee2"
+REPO_ID = "ForgeWM/ForgeWM-GT-1000"
+REVISION = "5a7071587e641ad130c7dbf6018cdb81631af9ac"
 
 
 def main() -> None:

@@ -95,8 +95,8 @@ python3 evaluation_pipeline/download_reference_data.py
 ```
 
 The downloader pins dataset revision
-`1d66e45d9257bd79eb3f34d1d5fe4ec044cf4ee2`. The repository is
-`Lynn031108/ForgeWM-GT-1000`; grant the reproducer read access before sharing
+`5a7071587e641ad130c7dbf6018cdb81631af9ac`. The repository is
+`ForgeWM/ForgeWM-GT-1000`; grant the reproducer read access before sharing
 these commands.
 
 Finally, copy the generated-video bundle into
