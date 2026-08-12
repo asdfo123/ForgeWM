@@ -40,6 +40,12 @@ class CausalDiffusionInferencePipeline(torch.nn.Module):
             action_config = dict(action_config)
             action_config.pop("local_attn_size", None)
             model_kwargs["action_config"] = action_config
+        # Match the training-time sliding-window regime; see
+        # CausalInferencePipeline for the full rationale.
+        if "local_attn_size" not in model_kwargs and hasattr(args, "local_attn_size"):
+            model_kwargs["local_attn_size"] = args.local_attn_size
+        if "sink_size" not in model_kwargs and hasattr(args, "sink_size"):
+            model_kwargs["sink_size"] = args.sink_size
         self.generator = WanDiffusionWrapper(
             **model_kwargs, is_causal=True) if generator is None else generator
         self.text_encoder = WanTextEncoder() if text_encoder is None else text_encoder

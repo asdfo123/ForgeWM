@@ -23,6 +23,7 @@ total_batch_size: 8
 ema_weight: 0.99
 ema_start_step: 2000000000
 log_iters: 100
+save_interval: 500
 total_train_steps: 4000
 negative_prompt: low quality, blurry, distorted
 image_or_video_shape:

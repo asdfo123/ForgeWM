@@ -1,0 +1,44 @@
+ForgeWM
+Copyright 2025 ForgeWM Team
+
+This product includes software developed by third parties. The list below says
+which directory came from where and under what terms it is redistributed.
+
+--------------------------------------------------------------------------------
+wan/  --  Wan2.1, with Matrix-Game 2 modifications
+--------------------------------------------------------------------------------
+
+Files under `wan/` are derived from Wan2.1 (https://github.com/Wan-Video/Wan2.1),
+Copyright 2024-2025 The Alibaba Wan Team Authors, licensed under the Apache
+License, Version 2.0. The upstream copyright headers are retained in place.
+
+`wan/modules/action_module.py` and `wan/modules/causal_model.py` additionally
+carry the action-conditioning and block-causal attention changes introduced by
+Matrix-Game 2.0 (https://github.com/SkyworkAI/Matrix-Game).
+
+--------------------------------------------------------------------------------
+model/, pipeline/, trainer/  --  Self-Forcing and Causal Forcing
+--------------------------------------------------------------------------------
+
+The training and inference scaffolding under `model/`, `pipeline/` and `trainer/`
+is derived from Self-Forcing (https://github.com/guandeh17/Self-Forcing) and
+Causal Forcing (https://github.com/thu-ml/Causal-Forcing), both Apache-2.0, which
+in turn build on CausVid (https://github.com/tianweiy/CausVid). The ForgeWM
+additions are the four-stage schedule, the action-conditioned data path, the
+first-chunk denoising schedule (FFE), and the CrossFPS action-interface widening.
+
+--------------------------------------------------------------------------------
+Weights and data -- NOT covered by this repository's licence
+--------------------------------------------------------------------------------
+
+* Matrix-Game 2.0 base weights, fetched by `scripts/download_models.sh` from
+  https://huggingface.co/Skywork/Matrix-Game-2.0, are distributed by Skywork AI
+  under their own terms. ForgeWM's Apache-2.0 licence does not extend to them.
+
+* GF-Minecraft gameplay videos and action labels come from GameFactory
+  (https://github.com/KlingAIResearch/GameFactory) under that project's terms.
+  `scripts/prepare_data.py` re-encodes them; it does not relicense them.
+
+* The CrossFPS gameplay data comes from SCOPE (https://z2tong.github.io/SCOPE)
+  and is not part of this repository. `configs/crossfps_*.yaml` describe the
+  recipe; supplying the data is the user's responsibility.

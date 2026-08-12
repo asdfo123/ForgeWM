@@ -1,3 +1,12 @@
+# Stage 1 - teacher-forced causal training.
+#
+# Stage 1 is a SIBLING of Stage 0, not its successor: both start from the same
+# MG2 base generator (model_kwargs.model_name below), and they are trained
+# independently.  Stage 2 continues from Stage 1; Stage 3 takes Stage 2 as its
+# generator and the frozen Stage-0 checkpoint as its real denoiser.  So there
+# is deliberately no `generator_ckpt` in this file.
+#
+# The reported lineage uses lr 2e-5 for 20,000 updates.
 trainer: diffusion
 causal: true
 i2v: true
@@ -15,7 +24,7 @@ seed: 0
 gradient_checkpointing: true
 load_raw_video: false
 sharding_strategy: full
-lr: 2.0e-06
+lr: 2.0e-05
 beta1: 0.0
 beta2: 0.999
 batch_size: 1
@@ -23,7 +32,8 @@ total_batch_size: 8
 ema_weight: 0.99
 ema_start_step: 2000000000
 log_iters: 100
-total_train_steps: 10000
+save_interval: 500
+total_train_steps: 20000
 negative_prompt: low quality, blurry, distorted
 image_or_video_shape:
 - 1
@@ -42,7 +52,6 @@ model_kwargs:
 data_path: ./data/action_lmdb
 action_data: true
 action_sharded: true
-generator_ckpt: ./ckpts/stage0/model.pt
 action_config:
   mouse_dim_in: 2
   keyboard_dim_in: 6

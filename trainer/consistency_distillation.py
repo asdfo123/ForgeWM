@@ -391,8 +391,13 @@ class Trainer:
             self.step += 1
 
            
-            # Save the model
-            if (not self.config.no_save) and (self.step - start_step) > 0 and self.step % self.config.log_iters == 0:
+            # Save the model. Checkpoint cadence is decoupled from logging
+            # cadence: `save()` writes a fresh multi-GB checkpoint_model_%06d/
+            # directory every time and prunes nothing, so a long run wants
+            # frequent scalars but infrequent checkpoints. Defaults to
+            # `log_iters`, so a config without `save_interval` is unchanged.
+            save_interval = getattr(self.config, "save_interval", self.config.log_iters)
+            if (not self.config.no_save) and (self.step - start_step) > 0 and self.step % save_interval == 0:
                 torch.cuda.empty_cache()
                 self.save()
                 torch.cuda.empty_cache()

@@ -1,14 +1,26 @@
-trainer: consistency_distillation
+# CrossFPS Stage 3 - on-policy DMD self-rollout on the FPS domain.
+#
+# Same recipe as stage3_dmd.yaml (4-step student, blocks 0-14, las 6, sink 0,
+# num_training_frames 22, dfake_gen_update_ratio 5, 4000 steps).  CrossFPS
+# deltas: the FPS data path, the 4-channel action interface, and the two
+# checkpoints -
+#
+#   * teacher_ckpt   : CrossFPS Stage 0 (the FPS real denoiser)
+#   * generator_ckpt : CrossFPS Stage 2 (the generator / critic init)
+#
+# No graft: both checkpoints already carry the dim=4 mouse projection.  To
+# train a few-step CrossFPS student, add the `denoising_step_list` /
+# `denoising_step_list_first_chunk` pair from stage3_dmd_1step.yaml or
+# stage3_dmd_2step.yaml on top of this file.
+trainer: score_distillation
 distribution_loss: dmd
 i2v: true
 causal: true
-is_causal: true
-teacher_forcing: true
-spatial_sf: true
 generator_fsdp_wrap_strategy: size
 real_score_fsdp_wrap_strategy: size
 fake_score_fsdp_wrap_strategy: size
 real_name: Wan2.1-T2V-1.3B
+fake_name: Wan2.1-T2V-1.3B
 text_encoder_fsdp_wrap_strategy: size
 denoising_step_list:
 - 1000
@@ -33,14 +45,13 @@ beta2: 0.999
 beta1_critic: 0.0
 beta2_critic: 0.999
 batch_size: 1
-total_batch_size: 2
+total_batch_size: 8
 ema_weight: 0.99
 ema_start_step: 200
-log_iters: 100
+log_iters: 200
 save_interval: 500
-total_train_steps: 6000
-discrete_cd_N: 48
-grad_accum: 1
+total_train_steps: 4000
+dfake_gen_update_ratio: 5
 negative_prompt: low quality, blurry, distorted
 image_or_video_shape:
 - 1
@@ -49,13 +60,9 @@ image_or_video_shape:
 - 44
 - 80
 num_frame_per_block: 3
-# The released Stage 2 trained with UNBOUNDED causal attention inside the clip:
-# its run config had no top-level `local_attn_size`, and the copy in
-# `action_config` below is popped and ignored (model/base.py:39,50). Setting 6
-# here would train a different model from the published `stage2/model.pt` --
-# which is what Stage 3 initialises from. Stage 3 is the only stage that pins
-# the window; see configs/stage3_dmd.yaml.
-# local_attn_size: 6
+local_attn_size: 6
+sink_size: 0
+num_training_frames: 22
 wandb_host: https://api.wandb.ai
 wandb_key: disabled
 wandb_entity: disabled
@@ -63,12 +70,17 @@ wandb_project: forgewm
 model_kwargs:
   timestep_shift: 5.0
   model_name: ./ckpts/MG2-base
-data_path: ./data/action_lmdb
+data_path: ./data/crossfps_lmdb
 action_data: true
 action_sharded: true
-generator_ckpt: ./ckpts/stage1/model.pt
+generator_ckpt: ./ckpts/crossfps_stage2/model.pt
+teacher_ckpt: ./ckpts/crossfps_stage0/model.pt
+generator_cpu_offload: false
+real_score_cpu_offload: false
+fake_score_cpu_offload: false
+text_encoder_cpu_offload: false
 action_config:
-  mouse_dim_in: 2
+  mouse_dim_in: 4
   keyboard_dim_in: 6
   hidden_size: 128
   keyboard_hidden_dim: 1024
@@ -104,20 +116,5 @@ action_config:
   - 12
   - 13
   - 14
-  - 15
-  - 16
-  - 17
-  - 18
-  - 19
-  - 20
-  - 21
-  - 22
-  - 23
-  - 24
-  - 25
-  - 26
-  - 27
-  - 28
-  - 29
 action_shard_prefixes:
 - shard

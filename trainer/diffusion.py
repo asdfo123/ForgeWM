@@ -68,6 +68,17 @@ class Trainer:
             self.model = BidirectionalDiffusion(config, device=self.device)
         else:
             self.model = CausalDiffusion(config, device=self.device)
+
+        # ─── CrossFPS action-interface adaptation (pre-FSDP) ──────────────
+        # Both hooks below must run on the raw (unwrapped, unsharded) module,
+        # so they live here rather than in the model class.  They are no-ops
+        # unless explicitly enabled in the config, so the released
+        # Minecraft-domain recipes are untouched.
+        if getattr(config, "graft_mouse_mlp_weight", False):
+            self._graft_mouse_mlp_weight(config)
+        if getattr(config, "reset_action_output_proj", False):
+            self._reset_action_output_proj()
+
         generator_wrap_strategy = getattr(config, "generator_fsdp_wrap_strategy", "size")
         generator_wrap_kwargs = dict(
             sharding_strategy=config.sharding_strategy,
@@ -201,7 +212,131 @@ class Trainer:
             self.pipeline.generator = self.model.generator
             self.pipeline.text_encoder = self.model.text_encoder
             
+    def _iter_action_modules(self):
+        """Yield (block_index, action_model) for every action-injected block."""
+        for block_index, block in enumerate(self.model.generator.model.blocks):
+            action_model = getattr(block, "action_model", None)
+            if action_model is not None:
+                yield block_index, action_model
+
+    @torch.no_grad()
+    def _reset_action_output_proj(self):
+        """Restore the zero-action-residual-at-initialization contract.
+
+        The action module is a ControlNet-style residual adapter: MG2 ships it
+        with `proj_mouse` / `proj_keyboard` zeroed, so at step 0 the action
+        branch contributes exactly nothing and the base video prior is intact.
+
+        Warm-starting from a *trained* checkpoint breaks that contract.  Note
+        that `proj_mouse.weight` has shape [img_hidden, mouse_hidden] — it does
+        not depend on `mouse_dim_in`, so it is NOT caught by the shape filter
+        in `utils/wan_wrapper.py` and loads back at full trained scale.  With a
+        re-shaped (CrossFPS 4-channel) mouse input feeding it, that means a
+        large, meaningless residual on step 0.  Re-zeroing the two output
+        projections (and the first mouse-MLP bias) lets the new interface be
+        learned from a quiet start instead of fighting a stale one.
+        """
+        num_reset = 0
+        for _, action_model in self._iter_action_modules():
+            for proj_name in ("proj_mouse", "proj_keyboard"):
+                proj = getattr(action_model, proj_name, None)
+                if proj is None:
+                    continue
+                torch.nn.init.zeros_(proj.weight)
+                if proj.bias is not None:
+                    torch.nn.init.zeros_(proj.bias)
+            mouse_mlp = getattr(action_model, "mouse_mlp", None)
+            if mouse_mlp is not None and mouse_mlp[0].bias is not None:
+                torch.nn.init.zeros_(mouse_mlp[0].bias)
+            num_reset += 1
+        if self.is_main_process:
+            print(f"[reset_action_output_proj] re-zeroed action output "
+                  f"projections in {num_reset} block(s)")
+
+    @torch.no_grad()
+    def _graft_mouse_mlp_weight(self, config):
+        """Seed a widened mouse input projection from the base checkpoint.
+
+        The CrossFPS adaptation widens `mouse_dim_in` from 2 (dx, dy) to 4
+        (two analog sticks), so each block's `mouse_mlp[0].weight` goes from
+        `[c, 1536 + 4*3*2]` to `[c, 1536 + 4*3*4]` (1560 -> 1584 input units).
+        The whole tensor therefore fails to load and is dropped by the
+        shape-mismatch filter in `utils/wan_wrapper.py`.
+
+        That is a problem, because ~97% of the tensor's width is the *visual*
+        half (`img_hidden_size = 1536`) which is perfectly transferable — a
+        naive random re-init throws it away and the model effectively stops
+        listening to control input.  So we graft instead:
+
+          * columns `[0:1536]`   <- copied verbatim from the base checkpoint
+          * columns `[1536:]`    <- each new channel copies one OLD channel,
+                                    per-timestep, following `src_map`
+
+        The default 2->4 map is `[0, 1, 1, 0]`: both new sticks start life as
+        a copy of the original (dx, dy) pair rather than as zeros.  Zeros were
+        tried first and the two extra camera channels stayed dead at
+        `lr = 2e-6` — with no gradient signal reaching a zero column there is
+        nothing to break the symmetry.
+
+        `mouse_mlp[0].bias` is `[c]` and mouse-dim independent, so it loads
+        normally and needs no grafting.
+        """
+        from safetensors.torch import load_file
+
+        model_name = dict(getattr(config, "model_kwargs", {}) or {}).get("model_name", None)
+        if model_name is None:
+            raise ValueError("graft_mouse_mlp_weight requires model_kwargs.model_name")
+        base_path = os.path.join(model_name, "diffusion_pytorch_model.safetensors")
+        if not os.path.exists(base_path):
+            raise FileNotFoundError(
+                f"graft_mouse_mlp_weight: base weights not found at {base_path}")
+        base_sd = load_file(base_path, device="cpu")
+
+        action_config = dict(getattr(config, "action_config", {}) or {})
+        pad_t = int(action_config.get("vae_time_compression_ratio", 4)) * \
+            int(action_config.get("windows_size", 3))
+        new_c = int(action_config.get("mouse_dim_in", 2))
+        src_map = getattr(config, "graft_mouse_channel_src", None)
+
+        num_grafted = 0
+        for block_index, action_model in self._iter_action_modules():
+            mouse_mlp = getattr(action_model, "mouse_mlp", None)
+            if mouse_mlp is None:
+                continue
+            key = f"blocks.{block_index}.action_model.mouse_mlp.0.weight"
+            if key not in base_sd:
+                continue
+            base_w = base_sd[key]
+            model_w = mouse_mlp[0].weight
+            if base_w.shape == model_w.shape:
+                continue  # nothing to graft; the plain load already handled it
+
+            hidden_dim = model_w.shape[1] - pad_t * new_c
+            old_c = (base_w.shape[1] - hidden_dim) // pad_t
+            block_src_map = src_map
+            if block_src_map is None:
+                block_src_map = [0, 1, 1, 0] if (old_c == 2 and new_c == 4) \
+                    else [c % old_c for c in range(new_c)]
+
+            new_w = torch.zeros_like(model_w)
+            new_w[:, :hidden_dim] = base_w[:, :hidden_dim].to(new_w.dtype)
+            # Control channels are laid out (timestep-major, channel-minor):
+            # see `torch.cat([hidden_states, group_mouse], dim=-1)` in
+            # wan/modules/action_module.py.
+            for t in range(pad_t):
+                for c_new in range(new_c):
+                    new_w[:, hidden_dim + t * new_c + c_new] = \
+                        base_w[:, hidden_dim + t * old_c + int(block_src_map[c_new])].to(new_w.dtype)
+            model_w.copy_(new_w)
+            num_grafted += 1
+
+        if self.is_main_process:
+            print(f"[graft_mouse_mlp_weight] grafted mouse input projection in "
+                  f"{num_grafted} block(s): {new_c} channel(s) seeded from "
+                  f"{base_path}")
+
     def _print_live_module_info(self, global_rank):
+
         from wan.modules.causal_model import CausalWanAttentionBlock
         from wan.modules.model import WanI2VCrossAttention
 
@@ -571,7 +706,11 @@ class Trainer:
                 
             no_save = getattr(self.config, "no_save", False)
             log_iters = getattr(self.config, "log_iters", 500)
-            if (not no_save) and self.step % log_iters == 0:
+            # Checkpoint cadence is decoupled from logging cadence: long runs
+            # want frequent scalars but infrequent (multi-GB) checkpoints.
+            # Defaults to `log_iters` so existing configs behave as before.
+            save_interval = getattr(self.config, "save_interval", log_iters)
+            if (not no_save) and self.step % save_interval == 0:
                 torch.cuda.empty_cache()
                 self.save()
                 torch.cuda.empty_cache()

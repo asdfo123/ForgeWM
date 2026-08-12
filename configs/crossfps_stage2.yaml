@@ -1,3 +1,15 @@
+# CrossFPS Stage 2 - online causal consistency distillation on the FPS domain.
+#
+# Same recipe as stage2_consistency_distillation.yaml (lr 2e-6 / lr_critic
+# 4e-7, EMA 0.99 from step 200, N=48 noise grid, 4-step schedule,
+# num_frame_per_block 3).  CrossFPS deltas: the FPS data path, the 4-channel
+# action interface, and generator_ckpt pointing at CrossFPS Stage 1.
+#
+# No graft: the Stage-1 checkpoint already carries the dim=4 mouse projection.
+# The MG2 base weights are still loaded first to build the model, so the log
+# will show one `[wan_load] skipped shape-mismatch` line for
+# action_model.mouse_mlp.0.weight followed by generator_ckpt loading with
+# missing=0 unexpected=0.  That is the expected sequence, not a bug.
 trainer: consistency_distillation
 distribution_loss: dmd
 i2v: true
@@ -63,12 +75,12 @@ wandb_project: forgewm
 model_kwargs:
   timestep_shift: 5.0
   model_name: ./ckpts/MG2-base
-data_path: ./data/action_lmdb
+data_path: ./data/crossfps_lmdb
 action_data: true
 action_sharded: true
-generator_ckpt: ./ckpts/stage1/model.pt
+generator_ckpt: ./ckpts/crossfps_stage1/model.pt
 action_config:
-  mouse_dim_in: 2
+  mouse_dim_in: 4
   keyboard_dim_in: 6
   hidden_size: 128
   keyboard_hidden_dim: 1024
