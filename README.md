@@ -1,3 +1,5 @@
+
+
 <p align="center">
   <img src="assets/banner.png" width="700">
 </p>
@@ -114,7 +116,7 @@ CUDA_VISIBLE_DEVICES=0 python inference.py \
     --output_path output/demo.mp4
 ```
 
-Supported actions: `forward`, `back`, `turn_right`, `turn_left`, `look_up`, `look_down`, `left`, `right`, `random`, `no_action`
+Supported actions: `forward`, `back`, `turn_right`, `turn_left`, `look_up`, `look_down`, `left`, `right`, `forward_turn_right`, `random`, `no_action`
 
 ---
 
