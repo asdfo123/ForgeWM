@@ -324,7 +324,7 @@ The script:
 ## Architecture
 
 <p align="center">
-  <img src="assets/architecture.png" >
+  <img src="assets/architecture.png">
 </p>
 
 > **Architecture is identical to [Matrix-Game 2](https://github.com/SkyworkAI/Matrix-Game)** — derived from WanX by removing the text branch and adding a hybrid action module (keyboard cross-attention + mouse channel concat). *Figure adapted from the Matrix-Game 2 paper.*
