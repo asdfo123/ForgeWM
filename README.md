@@ -5,7 +5,7 @@
 <h3 align="center">ForgeWM: Progressive Causal Training for Few-Step Action-Conditioned Video World Models</h3>
 
 <p align="center">
-  A playable world model you drive with keyboard, mouse or a gamepad — at <b>one denoising step</b>, in real time.
+  A playable world model you drive with keyboard, mouse or a gamepad — in real time.
 </p>
 
 <p align="center">
