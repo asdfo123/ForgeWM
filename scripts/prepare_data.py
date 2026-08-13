@@ -4,7 +4,7 @@ Prepare GF-Minecraft data_2003 as *sharded* LMDB at MG2's NATIVE 352×640
 resolution (latent 44×80), with the GF pitch sign flipped so it matches
 MG2's mouse convention.
 
-Differences vs prepare_action_lmdb_shard.py (the 480p version):
+Differences vs the 480p variant this was derived from:
 
   * target_h/target_w defaults: 480×832 -> 352×640
   * aspect-preserving resize + center-crop (mirrors MG2's _resizecrop in
@@ -21,7 +21,7 @@ Differences vs prepare_action_lmdb_shard.py (the 480p version):
 
 Usage (same shard slicing as the 480p script):
 
-    CUDA_VISIBLE_DEVICES=0 python prepare_action_lmdb_shard_360p.py \\
+    CUDA_VISIBLE_DEVICES=0 python scripts/prepare_data.py \\
         --data_dir    ... \\
         --output_dir  ... \\
         --vae_path    ckpts/MG2-base/Wan2.1_VAE.pth \\

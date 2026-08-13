@@ -10,6 +10,7 @@ build/
 *.pth
 wandb/
 outputs/
+output/
 logs/
 ckpts/
 data/

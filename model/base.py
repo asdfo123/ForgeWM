@@ -347,6 +347,11 @@ class SelfForcingModel(BaseModel):
             frame_seq_length=frame_seq_length,
             vae_time_compression_ratio=vae_tcr,
             use_action=(ac is not None),
+            # First-Frame Enhancement (FFE), used by the 1-/2-step students.
+            # None for the 4-step student, which keeps one schedule
+            # throughout.  See pipeline/self_forcing_training.py.
+            denoising_step_list_first_chunk=getattr(
+                self.args, "denoising_step_list_first_chunk", None),
         )
 
     def _compute_frame_seq_length(self):

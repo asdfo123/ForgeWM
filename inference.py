@@ -4,7 +4,11 @@ ForgeWM Inference — Action-conditioned video generation from a reference frame
 Supports all training stages:
   - Stage 0 (bidirectional): one-shot denoising, ancestral sampling
   - Stage 1 (causal AR): chunked causal denoising with KV cache
-  - Stage 3 (DMD): 4-step fast inference with KV cache
+  - Stage 3 (DMD): 1-, 2- or 4-step fast inference with KV cache
+
+Both action schemas are supported and selected automatically from the config's
+`action_config.mouse_dim_in`: 2 = Minecraft mouse+keys, 4 = CrossFPS dual
+analog sticks + gamepad buttons.
 
 Usage:
     python inference.py \
@@ -12,6 +16,13 @@ Usage:
         --image_path demo_images/forest.png \
         --action_type forward \
         --output_path output/demo.mp4
+
+    python inference.py \
+        --config_path configs/crossfps_stage3.yaml \
+        --checkpoint_path ckpts/crossfps_stage3/model.pt \
+        --image_path demo_images/fps_scene.png \
+        --action_type forward_look_right \
+        --output_path output/crossfps.mp4
 """
 import argparse
 import os
@@ -32,9 +43,42 @@ from wan.utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 # ─── Action Palette ───────────────────────────────────────────────────────────
 CAM_VALUE = 0.10
 
+# Minecraft (MG2) schema: mouse = 2-D camera delta, keyboard = 6 key flags.
+MINECRAFT_ACTIONS = [
+    "forward", "back", "left", "right",
+    "turn_right", "turn_left", "look_up", "look_down",
+    "forward_turn_right", "random", "no_action",
+]
+
+# CrossFPS (SCOPE) schema: mouse = 4-D dual analog sticks, keyboard = 6 buttons.
+#   mouse[..., 0:2] = left stick  [x, y]  -> strafe / advance
+#   mouse[..., 2:4] = right stick [x, y]  -> yaw / pitch
+#   keyboard[..., 0:6] = [RT (fire), LT (ADS), south (jump),
+#                         R3 (melee), west (reload), north (weapon)]
+# Sign convention follows the Xbox pad the traces were recorded on: pushing a
+# stick forward / up yields a NEGATIVE y, so "forward" is left-stick y = -m.
+FPS_ACTIONS = [
+    "idle", "forward", "back", "strafe_left", "strafe_right",
+    "look_left", "look_right", "look_up", "look_down",
+    "fire", "ads", "jump", "forward_fire", "forward_look_right",
+    "random", "no_action",
+]
+
+# Analog sticks are saturating, so demo clips use a large deflection rather
+# than the small per-frame delta the Minecraft mouse channel carries.
+STICK_VALUE = 0.80
+
 
 def make_action(action_type, num_raw_frames, mouse_dim=2, keyboard_dim=6):
-    """Build mouse/keyboard action tensors. Shape: [1, T, dim]."""
+    """Build mouse/keyboard action tensors. Shape: [1, T, dim].
+
+    Dispatches on `mouse_dim`, which is `action_config.mouse_dim_in` in the
+    config: 2 = Minecraft camera delta, 4 = CrossFPS dual analog sticks.
+    """
+    if mouse_dim == 4:
+        return make_fps_action(action_type, num_raw_frames,
+                               mouse_dim=mouse_dim, keyboard_dim=keyboard_dim)
+
     mouse = torch.zeros(1, num_raw_frames, mouse_dim)
     keyboard = torch.zeros(1, num_raw_frames, keyboard_dim)
 
@@ -64,7 +108,57 @@ def make_action(action_type, num_raw_frames, mouse_dim=2, keyboard_dim=6):
     elif action_type == "no_action":
         pass
     else:
-        raise ValueError(f"Unknown action: {action_type}")
+        raise ValueError(
+            f"Unknown action '{action_type}' for the Minecraft (mouse_dim=2) "
+            f"schema. Available: {', '.join(MINECRAFT_ACTIONS)}")
+    return mouse, keyboard
+
+
+def make_fps_action(action_type, num_raw_frames, mouse_dim=4, keyboard_dim=6,
+                    magnitude=STICK_VALUE):
+    """CrossFPS (SCOPE) gamepad palette. Shape: [1, T, dim]."""
+    mouse = torch.zeros(1, num_raw_frames, mouse_dim)
+    keyboard = torch.zeros(1, num_raw_frames, keyboard_dim)
+    m = magnitude
+
+    if action_type in ("idle", "no_action"):
+        pass
+    elif action_type == "forward":
+        mouse[:, :, 1] = -m
+    elif action_type == "back":
+        mouse[:, :, 1] = m
+    elif action_type == "strafe_left":
+        mouse[:, :, 0] = -m
+    elif action_type == "strafe_right":
+        mouse[:, :, 0] = m
+    elif action_type == "look_left":
+        mouse[:, :, 2] = -m
+    elif action_type == "look_right":
+        mouse[:, :, 2] = m
+    elif action_type == "look_up":
+        mouse[:, :, 3] = -m
+    elif action_type == "look_down":
+        mouse[:, :, 3] = m
+    elif action_type == "fire":
+        keyboard[:, :, 0] = 1.0
+    elif action_type == "ads":
+        keyboard[:, :, 1] = 1.0
+    elif action_type == "jump":
+        keyboard[:, :, 2] = 1.0
+    elif action_type == "forward_fire":
+        mouse[:, :, 1] = -m
+        keyboard[:, :, 0] = 1.0
+    elif action_type == "forward_look_right":
+        mouse[:, :, 1] = -m
+        mouse[:, :, 2] = m
+    elif action_type == "random":
+        torch.manual_seed(42)
+        mouse = (torch.rand(1, num_raw_frames, mouse_dim) - 0.5) * (2 * m)
+        keyboard[:, :, :3] = (torch.rand(1, num_raw_frames, 3) > 0.5).float()
+    else:
+        raise ValueError(
+            f"Unknown action '{action_type}' for the CrossFPS (mouse_dim=4) "
+            f"schema. Available: {', '.join(FPS_ACTIONS)}")
     return mouse, keyboard
 
 
@@ -180,15 +274,25 @@ def main():
     parser.add_argument("--image_path", type=str, required=True,
                         help="Reference frame image.")
     parser.add_argument("--action_type", type=str, default="forward",
-                        choices=["forward", "back", "left", "right",
-                                 "turn_right", "turn_left", "look_up", "look_down",
-                                 "forward_turn_right", "random", "no_action"])
+                        choices=MINECRAFT_ACTIONS
+                        + [a for a in FPS_ACTIONS if a not in MINECRAFT_ACTIONS],
+                        help="Which action to hold for the whole clip. The valid "
+                             "set depends on the checkpoint's action schema: see "
+                             "MINECRAFT_ACTIONS (mouse_dim_in=2) and FPS_ACTIONS "
+                             "(mouse_dim_in=4, CrossFPS).")
     parser.add_argument("--output_path", type=str, default="output/demo.mp4")
     parser.add_argument("--num_frames", type=int, default=21,
                         help="Number of latent frames to generate.")
     parser.add_argument("--height", type=int, default=352)
     parser.add_argument("--width", type=int, default=640)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--local_attn_size", type=int, default=None,
+                        help="Override the config's sliding-window size, in "
+                             "latent frames. 6 is what the Stage-3 students "
+                             "were trained with; -1 runs unbounded causal "
+                             "attention within the clip (slower, and the cost "
+                             "grows with rollout length) and is what Stages "
+                             "0-2 trained at. Default: whatever the config says.")
     args = parser.parse_args()
 
     device = torch.device("cuda")
@@ -200,6 +304,17 @@ def main():
     if os.path.exists("configs/default.yaml"):
         default_config = OmegaConf.load("configs/default.yaml")
         config = OmegaConf.merge(default_config, config)
+
+    # The sliding window is a top-level key that model/base.py reads off the
+    # config (action_config's copy is popped and ignored), so overriding it here
+    # is enough -- but do both so a printed config never disagrees with itself.
+    if args.local_attn_size is not None:
+        print(f"Overriding local_attn_size: "
+              f"{config.get('local_attn_size', -1)} -> {args.local_attn_size}")
+        config.local_attn_size = args.local_attn_size
+        if "action_config" in config and config.action_config is not None \
+                and "local_attn_size" in config.action_config:
+            config.action_config.local_attn_size = args.local_attn_size
 
     is_causal = config.get("causal", True)
     is_dmd = "denoising_step_list" in config and config.denoising_step_list is not None

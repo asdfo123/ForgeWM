@@ -49,6 +49,7 @@ class SelfForcingTrainingPipeline:
                  frame_seq_length: Optional[int] = None,
                  vae_time_compression_ratio: int = 4,
                  use_action: bool = False,
+                 denoising_step_list_first_chunk: Optional[List[int]] = None,
                  **kwargs):
         super().__init__()
         self.scheduler = scheduler
@@ -56,6 +57,32 @@ class SelfForcingTrainingPipeline:
         self.denoising_step_list = denoising_step_list
         if self.denoising_step_list[-1] == 0:
             self.denoising_step_list = self.denoising_step_list[:-1]  # remove the zero timestep for inference
+
+        # ─── First-Frame Enhancement (FFE) ───────────────────────────────
+        # The 1-/2-step students spend the full 4-step schedule on chunk 0
+        # and the cheap main schedule on every later chunk.  Chunk 0 anchors
+        # the whole rollout (it is the only block conditioned purely on the
+        # reference frame), so paying for it once buys a large quality gain
+        # at negligible amortized cost.  None => one schedule throughout,
+        # which is what the 4-step student uses.
+        #
+        # NOTE (train/inference asymmetry, kept deliberately): the main
+        # `denoising_step_list` reaching this pipeline has already been
+        # remapped onto the shifted flow-matching grid when
+        # `warp_denoising_step: true`, whereas the first-chunk list is
+        # consumed here as the raw integers from the config.  At inference
+        # (see pipeline/causal_inference.py) BOTH lists are warped.  The
+        # released 1-/2-step checkpoints were trained under exactly this
+        # asymmetry, so we reproduce it rather than silently "fix" it: block 0
+        # is masked out of the DMD gradient
+        # (`gradient_mask[:, :num_frame_per_block] = False`) and the DMD
+        # timestep window below is derived from the interior schedule, so the
+        # first-chunk timesteps only shape the rollout that later blocks
+        # condition on.  Changing this would invalidate the published numbers.
+        self.denoising_step_list_first_chunk = denoising_step_list_first_chunk
+        if self.denoising_step_list_first_chunk is not None:
+            if self.denoising_step_list_first_chunk[-1] == 0:
+                self.denoising_step_list_first_chunk = self.denoising_step_list_first_chunk[:-1]
 
         # Wan specific hyperparameters.
         # num_transformer_blocks: MG2 base has num_layers=30.
@@ -221,7 +248,16 @@ class SelfForcingTrainingPipeline:
         if self.independent_first_frame and initial_latent is None:
             all_num_frames = [1] + all_num_frames
         num_denoising_steps = len(self.denoising_step_list)
+        has_first = self.denoising_step_list_first_chunk is not None
+        # FFE gives chunk 0 a schedule of a different length, so its exit
+        # flag has to be drawn from its own range.  Every other chunk shares
+        # the interior range as before.
         exit_flags = self.generate_and_sync_list(len(all_num_frames), num_denoising_steps, device=noise.device)
+        if has_first:
+            exit_flag_first = self.generate_and_sync_list(
+                1, len(self.denoising_step_list_first_chunk), device=noise.device)[0]
+        else:
+            exit_flag_first = None
         start_gradient_frame_index = num_output_frames - 21
 
         # for block_index in range(num_blocks):
@@ -238,12 +274,19 @@ class SelfForcingTrainingPipeline:
                 noisy_input = noise[
                     :, current_start_frame - num_input_frames:current_start_frame + current_num_frames - num_input_frames]
 
+                # FFE: chunk 0 runs the (longer) first-chunk schedule; all
+                # later chunks run the main schedule.
+                if has_first and block_index == 0:
+                    current_denoising_list = self.denoising_step_list_first_chunk
+                    current_exit_flag_index = exit_flag_first
+                else:
+                    current_denoising_list = self.denoising_step_list
+                    current_exit_flag_index = (
+                        exit_flags[0] if self.same_step_across_blocks else exit_flags[block_index])
+
                 # Step 3.1: Spatial denoising loop
-                for index, current_timestep in enumerate(self.denoising_step_list):
-                    if self.same_step_across_blocks:
-                        exit_flag = (index == exit_flags[0])
-                    else:
-                        exit_flag = (index == exit_flags[block_index])
+                for index, current_timestep in enumerate(current_denoising_list):
+                    exit_flag = (index == current_exit_flag_index)
                     timestep = torch.ones(
                         [batch_size, current_num_frames],
                         device=noise.device,
@@ -261,7 +304,7 @@ class SelfForcingTrainingPipeline:
                                 kv_cache_keyboard=self.kv_cache_keyboard,
                                 current_start=current_start_frame * self.frame_seq_length
                             )
-                            next_timestep = self.denoising_step_list[index + 1]
+                            next_timestep = current_denoising_list[index + 1]
                             noisy_input = self.scheduler.add_noise(
                                 denoised_pred.flatten(0, 1),
                                 torch.randn_like(denoised_pred.flatten(0, 1)),
@@ -353,6 +396,10 @@ class SelfForcingTrainingPipeline:
         # denoised_timestep_to = next timestep smaller than \tau
         # These are just engineering tricks
         # to align DMD timestep sampling with the actual denoising range used by the generator
+        # Under FFE this window is deliberately derived from the INTERIOR
+        # schedule (`exit_flags[0]`), never from the first-chunk one: chunk 0
+        # is excluded from the DMD gradient, so the loss should be aligned
+        # with the schedule the supervised blocks actually ran.
         elif exit_flags[0] == len(self.denoising_step_list) - 1:
             # corner case when \tau is the smallest non-zero timestep
             denoised_timestep_to = 0

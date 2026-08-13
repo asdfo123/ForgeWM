@@ -1,20 +1,24 @@
-trainer: consistency_distillation
-distribution_loss: dmd
-i2v: true
+# CrossFPS Stage 1 - teacher-forced causal training on the FPS domain.
+#
+# Same recipe as stage1_teacher_forcing.yaml.  The only differences are the
+# FPS data path, the 4-channel (dual-stick) action interface, the longer
+# schedule, and the checkpoint cadence.
+#
+# No `graft_mouse_mlp_weight` here: the Stage-0 checkpoint below was already
+# trained with mouse_dim_in: 4, so its action_model.mouse_mlp.0.weight is
+# [1024, 1584] and loads without any shape mismatch.  The graft is only needed
+# once, at the point where the interface widens.
+#
+# Unlike the Minecraft Stage 1 (which is a sibling of Stage 0 and starts from
+# the MG2 base), CrossFPS Stage 1 genuinely continues from CrossFPS Stage 0:
+# the domain adaptation has to happen before the causal training, or the causal
+# model would be learning FPS dynamics through a Minecraft action interface.
+trainer: diffusion
 causal: true
-is_causal: true
+i2v: true
 teacher_forcing: true
-spatial_sf: true
-generator_fsdp_wrap_strategy: size
-real_score_fsdp_wrap_strategy: size
-fake_score_fsdp_wrap_strategy: size
-real_name: Wan2.1-T2V-1.3B
+generator_fsdp_wrap_strategy: transformer
 text_encoder_fsdp_wrap_strategy: size
-denoising_step_list:
-- 1000
-- 750
-- 500
-- 250
 warp_denoising_step: true
 ts_schedule: false
 num_train_timestep: 1000
@@ -27,20 +31,15 @@ gradient_checkpointing: true
 load_raw_video: false
 sharding_strategy: full
 lr: 2.0e-06
-lr_critic: 4.0e-07
 beta1: 0.0
 beta2: 0.999
-beta1_critic: 0.0
-beta2_critic: 0.999
 batch_size: 1
-total_batch_size: 2
+total_batch_size: 8
 ema_weight: 0.99
-ema_start_step: 200
+ema_start_step: 2000000000
 log_iters: 100
 save_interval: 500
-total_train_steps: 6000
-discrete_cd_N: 48
-grad_accum: 1
+total_train_steps: 20000
 negative_prompt: low quality, blurry, distorted
 image_or_video_shape:
 - 1
@@ -49,13 +48,6 @@ image_or_video_shape:
 - 44
 - 80
 num_frame_per_block: 3
-# The released Stage 2 trained with UNBOUNDED causal attention inside the clip:
-# its run config had no top-level `local_attn_size`, and the copy in
-# `action_config` below is popped and ignored (model/base.py:39,50). Setting 6
-# here would train a different model from the published `stage2/model.pt` --
-# which is what Stage 3 initialises from. Stage 3 is the only stage that pins
-# the window; see configs/stage3_dmd.yaml.
-# local_attn_size: 6
 wandb_host: https://api.wandb.ai
 wandb_key: disabled
 wandb_entity: disabled
@@ -63,12 +55,12 @@ wandb_project: forgewm
 model_kwargs:
   timestep_shift: 5.0
   model_name: ./ckpts/MG2-base
-data_path: ./data/action_lmdb
+data_path: ./data/crossfps_lmdb
 action_data: true
 action_sharded: true
-generator_ckpt: ./ckpts/stage1/model.pt
+generator_ckpt: ./ckpts/crossfps_stage0/model.pt
 action_config:
-  mouse_dim_in: 2
+  mouse_dim_in: 4
   keyboard_dim_in: 6
   hidden_size: 128
   keyboard_hidden_dim: 1024

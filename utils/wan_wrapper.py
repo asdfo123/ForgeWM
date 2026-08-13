@@ -228,8 +228,38 @@ class WanDiffusionWrapper(nn.Module):
 
         best_missing = None
         best_unexpected = None
+        model_state = model.state_dict()
         for candidate in candidates:
-            missing, unexpected = model.load_state_dict(candidate, strict=False)
+            # Shape-mismatch filter.  When the action interface is re-shaped
+            # relative to the checkpoint (e.g. the CrossFPS adaptation widens
+            # mouse_dim_in from 2 to 4, so every block's
+            # action_model.mouse_mlp.0.weight goes 1560 -> 1584 input units),
+            # the corresponding tensors cannot be copied.  We drop them here
+            # and let them keep their freshly initialized values; the trainer
+            # is responsible for seeding them properly (see
+            # `graft_mouse_mlp_weight` in trainer/diffusion.py).  Without this
+            # the load would raise and no re-shaped build could ever start.
+            filtered = {}
+            skipped_shape = []
+            for k, v in candidate.items():
+                if k in model_state and hasattr(v, "shape") and v.shape != model_state[k].shape:
+                    skipped_shape.append((k, tuple(v.shape), tuple(model_state[k].shape)))
+                    continue
+                filtered[k] = v
+            if skipped_shape:
+                for k, ckpt_shape, model_shape in skipped_shape[:3]:
+                    print(f"[wan_load] skipped shape-mismatch: {k} "
+                          f"ckpt={ckpt_shape} model={model_shape}")
+                if len(skipped_shape) > 3:
+                    print(f"[wan_load] ... and {len(skipped_shape) - 3} more shape "
+                          f"mismatches (all left at their initialized values)")
+
+            missing, unexpected = model.load_state_dict(filtered, strict=False)
+            if skipped_shape:
+                # A deliberately skipped tensor shows up in `missing`; that is
+                # expected, not a load failure.
+                skipped_names = {k for k, _, _ in skipped_shape}
+                missing = [k for k in missing if k not in skipped_names]
             if action_disabled:
                 unexpected = [k for k in unexpected if ".action_model." not in k]
             elif action_blocks_subset is not None:

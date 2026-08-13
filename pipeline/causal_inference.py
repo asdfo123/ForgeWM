@@ -45,6 +45,15 @@ class CausalInferencePipeline(torch.nn.Module):
             action_config = dict(action_config)
             action_config.pop("local_attn_size", None)
             model_kwargs["action_config"] = action_config
+        # Forward the top-level sliding-window settings so the DiT is built
+        # with the SAME attention regime it was trained under.  The Stage-2/3
+        # configs set `local_attn_size: 6`; without this the wrapper would
+        # silently fall back to its -1 (full-causal) default and the released
+        # checkpoints would be evaluated off-distribution.
+        if "local_attn_size" not in model_kwargs and hasattr(args, "local_attn_size"):
+            model_kwargs["local_attn_size"] = args.local_attn_size
+        if "sink_size" not in model_kwargs and hasattr(args, "sink_size"):
+            model_kwargs["sink_size"] = args.sink_size
         self.generator = WanDiffusionWrapper(
             **model_kwargs, is_causal=True) if generator is None else generator
         self.text_encoder = WanTextEncoder() if text_encoder is None else text_encoder
@@ -57,6 +66,20 @@ class CausalInferencePipeline(torch.nn.Module):
         if args.warp_denoising_step:
             timesteps = torch.cat((self.scheduler.timesteps.cpu(), torch.tensor([0], dtype=torch.float32)))
             self.denoising_step_list = timesteps[1000 - self.denoising_step_list]
+
+        # First-Frame Enhancement (FFE), used by the 1-/2-step students:
+        # chunk 0 runs this (longer) schedule, every later chunk runs the main
+        # one above.  Absent / None for the 4-step student.
+        first_chunk = getattr(args, "denoising_step_list_first_chunk", None)
+        if first_chunk is not None:
+            self.denoising_step_list_first_chunk = torch.tensor(first_chunk, dtype=torch.long)
+            if args.warp_denoising_step:
+                timesteps = torch.cat(
+                    (self.scheduler.timesteps.cpu(), torch.tensor([0], dtype=torch.float32)))
+                self.denoising_step_list_first_chunk = \
+                    timesteps[1000 - self.denoising_step_list_first_chunk]
+        else:
+            self.denoising_step_list_first_chunk = None
 
         self.num_transformer_blocks = 30
         self.frame_seq_length = None
@@ -226,23 +249,29 @@ class CausalInferencePipeline(torch.nn.Module):
         all_num_frames = [self.num_frame_per_block] * num_blocks
         if self.independent_first_frame and initial_latent is None:
             all_num_frames = [1] + all_num_frames
-        for current_num_frames in tqdm.tqdm(all_num_frames):
+        for block_index, current_num_frames in enumerate(tqdm.tqdm(all_num_frames)):
             if profile:
                 block_start.record()
 
             noisy_input = noise[
                 :, current_start_frame - num_input_frames:current_start_frame + current_num_frames - num_input_frames]
 
+            # FFE: chunk 0 gets the first-chunk schedule (if configured), all
+            # later chunks the main one.
+            if block_index == 0 and self.denoising_step_list_first_chunk is not None:
+                current_denoising_list = self.denoising_step_list_first_chunk
+            else:
+                current_denoising_list = self.denoising_step_list
+
             # Step 3.1: Spatial denoising loop
-            for index, current_timestep in enumerate(self.denoising_step_list):
-                # print(f"current_timestep: {current_timestep}")
+            for index, current_timestep in enumerate(current_denoising_list):
                 # set current timestep
                 timestep = torch.ones(
                     [batch_size, current_num_frames],
                     device=noise.device,
                     dtype=torch.int64) * current_timestep
 
-                if index < len(self.denoising_step_list) - 1:
+                if index < len(current_denoising_list) - 1:
                     _, denoised_pred = self.generator(
                         noisy_image_or_video=noisy_input,
                         conditional_dict=cond_current(conditional_dict, current_start_frame, current_num_frames, vae_time_compression_ratio),
@@ -253,7 +282,7 @@ class CausalInferencePipeline(torch.nn.Module):
                         crossattn_cache=self.crossattn_cache,
                         current_start=current_start_frame * self.frame_seq_length
                     )
-                    next_timestep = self.denoising_step_list[index + 1]
+                    next_timestep = current_denoising_list[index + 1]
                     noisy_input = self.scheduler.add_noise(
                         denoised_pred.flatten(0, 1),
                         torch.randn_like(denoised_pred.flatten(0, 1)),

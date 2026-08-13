@@ -1,16 +1,28 @@
-trainer: consistency_distillation
+# ForgeWM-1: 1-step student.
+#
+# Identical to stage3_dmd.yaml except for the sampling schedule:
+#   * denoising_step_list             -> [1000]                  (1 step)
+#   * denoising_step_list_first_chunk -> [1000, 750, 500, 250]    (4 steps)
+#
+# The second key enables First-Frame Enhancement (FFE): chunk 0 is the only
+# block conditioned purely on the reference frame, so it anchors the whole
+# rollout.  Paying the full 4-step schedule there once and running the cheap
+# 1-step schedule everywhere else keeps the anchor sharp at negligible
+# amortized cost.  Train and inference use the same rule, so the student is
+# never evaluated off-distribution.
+trainer: score_distillation
 distribution_loss: dmd
 i2v: true
 causal: true
-is_causal: true
-teacher_forcing: true
-spatial_sf: true
 generator_fsdp_wrap_strategy: size
 real_score_fsdp_wrap_strategy: size
 fake_score_fsdp_wrap_strategy: size
 real_name: Wan2.1-T2V-1.3B
+fake_name: Wan2.1-T2V-1.3B
 text_encoder_fsdp_wrap_strategy: size
 denoising_step_list:
+- 1000
+denoising_step_list_first_chunk:
 - 1000
 - 750
 - 500
@@ -33,14 +45,13 @@ beta2: 0.999
 beta1_critic: 0.0
 beta2_critic: 0.999
 batch_size: 1
-total_batch_size: 2
+total_batch_size: 8
 ema_weight: 0.99
 ema_start_step: 200
-log_iters: 100
+log_iters: 200
 save_interval: 500
-total_train_steps: 6000
-discrete_cd_N: 48
-grad_accum: 1
+total_train_steps: 4000
+dfake_gen_update_ratio: 5
 negative_prompt: low quality, blurry, distorted
 image_or_video_shape:
 - 1
@@ -49,13 +60,9 @@ image_or_video_shape:
 - 44
 - 80
 num_frame_per_block: 3
-# The released Stage 2 trained with UNBOUNDED causal attention inside the clip:
-# its run config had no top-level `local_attn_size`, and the copy in
-# `action_config` below is popped and ignored (model/base.py:39,50). Setting 6
-# here would train a different model from the published `stage2/model.pt` --
-# which is what Stage 3 initialises from. Stage 3 is the only stage that pins
-# the window; see configs/stage3_dmd.yaml.
-# local_attn_size: 6
+local_attn_size: 6
+sink_size: 0
+num_training_frames: 22
 wandb_host: https://api.wandb.ai
 wandb_key: disabled
 wandb_entity: disabled
@@ -66,7 +73,12 @@ model_kwargs:
 data_path: ./data/action_lmdb
 action_data: true
 action_sharded: true
-generator_ckpt: ./ckpts/stage1/model.pt
+generator_ckpt: ./ckpts/stage2/model.pt
+teacher_ckpt: ./ckpts/stage0/model.pt
+generator_cpu_offload: false
+real_score_cpu_offload: false
+fake_score_cpu_offload: false
+text_encoder_cpu_offload: false
 action_config:
   mouse_dim_in: 2
   keyboard_dim_in: 6
@@ -104,20 +116,5 @@ action_config:
   - 12
   - 13
   - 14
-  - 15
-  - 16
-  - 17
-  - 18
-  - 19
-  - 20
-  - 21
-  - 22
-  - 23
-  - 24
-  - 25
-  - 26
-  - 27
-  - 28
-  - 29
 action_shard_prefixes:
 - shard
