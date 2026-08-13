@@ -8,19 +8,7 @@
   A playable world model you drive with keyboard, mouse or a gamepad — in real time.
 </p>
 
-<p align="center">
-  Xinye Li<sup>1,2,*</sup>, Lingshuai Lin<sup>3,4,*</sup>, Lei Wang<sup>2</sup>,
-  Liuzhou Zhang<sup>5</sup>, Jialin Cui<sup>3,4</sup>, Qingshan Li<sup>4</sup>,
-  Guanchu Wang<sup>4</sup>, Qingbin Liu<sup>2</sup>, Xi Chen<sup>2</sup>,
-  Jiang Bian<sup>2</sup>, Wai Lam<sup>1,†</sup>
-</p>
-<p align="center">
-  <sup>1</sup>CUHK &nbsp; <sup>2</sup>Tencent PCG &nbsp; <sup>3</sup>Fudan University
-  &nbsp; <sup>4</sup>Shanghai AI Laboratory &nbsp; <sup>5</sup>HKUST
-</p>
-<p align="center">
-  <sub>* Equal contribution &nbsp;·&nbsp; † Corresponding author &nbsp;·&nbsp; <a href="mailto:xyli@se.cuhk.edu.hk">xyli@se.cuhk.edu.hk</a></sub>
-</p>
+
 
 <p align="center">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue">
