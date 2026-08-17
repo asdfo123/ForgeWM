@@ -17,7 +17,7 @@
   <a href="https://asdfo123.github.io/ForgeWM/"><img src="https://img.shields.io/badge/🌐%20Project-Page-blue"></a>
   <a href="https://huggingface.co/ForgeWM/ForgeWM"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Models-yellow"></a>
   <a href="https://huggingface.co/datasets/ForgeWM/ForgeWM-data"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Data-yellow"></a>
-  <img src="https://img.shields.io/badge/arXiv-coming%20soon-red">
+  <a href="https://arxiv.org/abs/2608.14022"><img src="https://img.shields.io/badge/arXiv-2608.14022-red"></a>
   <a href="assets/wechat.JPG"><img src="https://img.shields.io/badge/WeChat-Group-07C160?logo=wechat&logoColor=white"></a>
 </p>
 
