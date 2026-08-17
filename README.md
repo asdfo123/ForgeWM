@@ -359,10 +359,11 @@ Unlike T2V models that generate from text alone, ForgeWM uses a three-pathway im
 - ✅ Few-step students — ForgeWM-1 / -2 checkpoints with First-Frame Enhancement
 - ✅ CrossFPS inference checkpoint — the same recipe on a gamepad FPS domain
 - ✅ Pre-encoded training data ([HuggingFace](https://huggingface.co/datasets/ForgeWM/ForgeWM-data))
+- ✅ Tech report ([arXiv](https://arxiv.org/abs/2608.14022))
 
 ### In progress
 - 🚧 Interactive real-time demo
-- 🚧 Tech report (arXiv)
+
 
 ### Future / community
 - 💭 More game domains beyond Minecraft and FPS (racing, platformers, …)
