@@ -404,14 +404,16 @@ We also thank the authors of:
 
 ```bibtex
 @misc{li2026forgewm,
-  title={ForgeWM: Progressive Causal Training for Few-Step Action-Conditioned Video World Models},
-  author={Xinye Li and Lingshuai Lin and Lei Wang and Liuzhou Zhang and
-          Jialin Cui and Qingshan Li and Guanchu Wang and Qingbin Liu and
-          Xi Chen and Jiang Bian and Wai Lam},
-  year={2026},
-  url={https://github.com/asdfo123/ForgeWM}
+  title         = {ForgeWM: Progressive Causal Training for Few-Step
+                   Action-Conditioned Video World Models},
+  author        = {Xinye Li and Lingshuai Lin and Lei Wang and Liuzhou Zhang and
+                   Jialin Cui and Qingshan Li and Guanchu Wang and Qingbin Liu and
+                   Xi Chen and Jiang Bian and Wai Lam},
+  year          = {2026},
+  url           = {https://arxiv.org/abs/2608.14022}
 }
 ```
+
 
 ---
 
