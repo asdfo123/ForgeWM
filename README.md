@@ -43,7 +43,7 @@
 
 ForgeWM is an open, end-to-end recipe for **few-step, action-conditioned video world models** — interactive generators that respond to discrete keyboard/mouse or gamepad input and roll out in real time. It brings the [Causal Forcing](https://github.com/thu-ml/Causal-Forcing) distillation paradigm to a game-native I2V backbone ([Matrix-Game 2](https://github.com/SkyworkAI/Matrix-Game)) trained on open data ([GameFactory](https://github.com/KlingAIResearch/GameFactory)), and is reproducible on 8 GPUs.
 
-This repository accompanies the ForgeWM tech report and releases the full training code, checkpoints, and pre-encoded data.
+This repository accompanies the ForgeWM tech report ([arXiv:2608.14022](https://arxiv.org/abs/2608.14022)) and releases the full training code, checkpoints, and pre-encoded data.
 
 - **Progressive causal pipeline** — four stages (bidirectional SFT → teacher-forced causal AR → consistency distillation → on-policy DMD) that take an MG2 base to a real-time interactive student.
 - **Few-step students** — 1-, 2-, and 4-step models (ForgeWM-1 / -2 / -4) from one Stage-3 run per step budget, up to 72 FPS on a single H20.
@@ -410,10 +410,12 @@ We also thank the authors of:
                    Jialin Cui and Qingshan Li and Guanchu Wang and Qingbin Liu and
                    Xi Chen and Jiang Bian and Wai Lam},
   year          = {2026},
+  eprint        = {2608.14022},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CV},
   url           = {https://arxiv.org/abs/2608.14022}
 }
 ```
-
 
 ---
 
